@@ -62,6 +62,7 @@ section{display:flex;flex-direction:column;gap:10px;min-width:0}
 .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
 .field{min-width:0}
 .field label{display:block;font-size:13px;color:var(--fg2);margin-bottom:6px}
+.field-hint{margin:6px 2px 0;font-size:12px;line-height:1.4;color:var(--fg3)}
 .stepper{display:flex;align-items:center;background:var(--inset);border-radius:var(--r-md);overflow:hidden}
 .stepper button{appearance:none;border:0;background:transparent;width:42px;height:42px;flex:none;font-size:22px;line-height:1;color:var(--accent);cursor:pointer}
 .stepper button:disabled{color:var(--fg3);cursor:default}
@@ -168,6 +169,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <input id="f-other" type="number" inputmode="numeric" min="-20" max="50" step="1">
             <button type="button" data-step="1" data-for="f-other" aria-label="其他加成加 1">+</button>
           </div>
+          <p class="field-hint">裝備等沒列到的近距離傷害，例如傲慢的遺產</p>
         </div>
       </div>
       <div class="chips" id="derived"></div>
