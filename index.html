@@ -62,7 +62,8 @@ section{display:flex;flex-direction:column;gap:10px;min-width:0}
 .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
 .field{min-width:0}
 .field label{display:block;font-size:13px;color:var(--fg2);margin-bottom:6px}
-.field-hint{margin:6px 2px 0;font-size:12px;line-height:1.4;color:var(--fg3)}
+.field-hint{margin:6px 2px 0;font-size:12px;line-height:1.45;color:var(--fg3);text-wrap:pretty;text-spacing-trim:trim-start}
+.nowrap{white-space:nowrap}
 .stepper{display:flex;align-items:center;background:var(--inset);border-radius:var(--r-md);overflow:hidden}
 .stepper button{appearance:none;border:0;background:transparent;width:42px;height:42px;flex:none;font-size:22px;line-height:1;color:var(--accent);cursor:pointer}
 .stepper button:disabled{color:var(--fg3);cursor:default}
@@ -88,7 +89,7 @@ section{display:flex;flex-direction:column;gap:10px;min-width:0}
 .row-l{display:flex;flex-direction:column}
 .row-n{font-size:16px;font-weight:500}
 .row-v{font-size:13px;color:var(--fg2)}
-.switch{position:relative;width:51px;height:31px;flex:none}
+.switch{position:relative;display:inline-block;width:51px;height:31px;flex:none}
 .switch input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer;z-index:1}
 .switch .track{position:absolute;inset:0;border-radius:999px;background:var(--inset);transition:background .2s}
 .switch .track::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:var(--knob);box-shadow:0 2px 6px rgba(0,0,0,.22);transition:transform .2s}
@@ -103,7 +104,7 @@ section{display:flex;flex-direction:column;gap:10px;min-width:0}
 .switch.sm{width:40px;height:24px}
 .switch.sm .track::after{width:20px;height:20px}
 .switch.sm input:checked+.track::after{transform:translateX(16px)}
-.mini-toggle{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--fg2);cursor:pointer}
+.field .mini-toggle{display:flex;align-items:center;gap:8px;margin:8px 2px 0;font-size:12px;color:var(--fg2);cursor:pointer}
 .chip-on{background:var(--accent-soft);color:var(--accent)}
 .weapons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .wcard{position:relative;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
@@ -131,6 +132,8 @@ select{appearance:none;-webkit-appearance:none;width:100%;font:inherit;font-size
 .badge{font-size:12px;font-weight:600;color:var(--surface);background:var(--accent);padding:2px 9px;border-radius:999px}
 .add{appearance:none;border:1.5px dashed var(--line);background:transparent;border-radius:var(--r-lg);min-height:140px;color:var(--accent);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lede,.hint,.field-hint,.row-v,.sec-note{word-break:keep-all;overflow-wrap:anywhere;text-wrap:pretty}
+@media (min-width:760px){.toggles{display:grid;grid-template-columns:1fr 1fr;column-gap:32px}.toggles>.row:nth-child(2){border-top:0;padding-top:2px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <style>html{background:var(--bg);-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -180,7 +183,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <input id="f-other" type="number" inputmode="numeric" min="-20" max="50" step="1">
             <button type="button" data-step="1" data-for="f-other" aria-label="其他加成加 1">+</button>
           </div>
-          <p class="field-hint">其他沒列到的近距離傷害（例如傲慢的遺產）</p>
+          <p class="field-hint">其他沒列到的近距離傷害<span class="nowrap">（例如傲慢的遺產）</span></p>
         </div>
       </div>
       <div class="chips" id="derived"></div>
@@ -246,8 +249,7 @@ const PRESETS={
 };
 const BUFFS=[
   {id:"berserk",n:"狂暴術",v:5,src:"魔法師魔法，防禦 -10"},
-  {id:"dance",n:"舞躍之火",v:3,src:"妖精魔法，和烈炎武器擇一",group:"elf"},
-  {id:"blaze",n:"烈炎武器",v:5,src:"妖精魔法，命中 +3，和舞躍之火擇一",group:"elf"},
+  {id:"dance",n:"舞躍之火",v:3,src:"妖精魔法"},
   {id:"bless",n:"祝福魔法武器",v:2,src:"妖精、魔法師魔法，命中 +2，武器魔法三選一",group:"wpn"},
   {id:"pseudo",n:"擬似魔法武器",v:2,src:"王族、妖精、魔法師魔法，武器魔法三選一",group:"wpn"},
   {id:"holy",n:"神聖武器",v:1,src:"全職業魔法，命中 +1，打不死系另有加成，武器魔法三選一",group:"wpn"},
@@ -412,7 +414,7 @@ function update(){
 }
 
 $("buffs").innerHTML=BUFFS.map(b=>`<label class="row"><span class="row-l"><span class="row-n">${b.n}</span><span class="row-v">近距離傷害 +${b.v}・${b.src}</span></span><span class="switch"><input type="checkbox" id="b-${b.id}" data-buff="${b.id}"><span class="track" aria-hidden="true"></span></span></label>`).join("");
-$("f-doll").innerHTML=DOLLS.map(d=>`<option value="${d.id}">${d.n}${d.v?`（近距離傷害 +${d.v}）`:""}</option>`).join("");
+$("f-doll").innerHTML=DOLLS.map(d=>`<option value="${d.id}">${d.n}${d.v?` +${d.v}`:""}</option>`).join("");
 
 document.addEventListener("click",e=>{
   const sz=e.target.closest("#size-seg [data-size]");
