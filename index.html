@@ -375,7 +375,7 @@ function update(){
   const p=PRESETS[state.preset];
   document.querySelectorAll("#size-seg [data-size]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.size===state.size)));
   $("t-undead").checked=state.undead;
-  $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘 <b>${p.sword}</b> 刀、匕首 <b>${p.dagger}</b> 刀 <span class="tag meas">實測</span>`;
+  $("preset-hint").innerHTML=`${p.desc}：<span class="nowrap">單手劍每分鐘 <b>${p.sword}</b> 刀</span>、<span class="nowrap">匕首 <b>${p.dagger}</b> 刀</span> <span class="tag meas">實測</span>`;
   ["level","str","other"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
   const baseStr=state.str-(state.rkStr?1:0),sb=strBonus(baseStr),lv=levelBonus(state.level,p.knight);
   $("f-rkstr").checked=state.rkStr;
@@ -413,7 +413,7 @@ function update(){
   save();
 }
 
-$("buffs").innerHTML=BUFFS.map(b=>`<label class="row"><span class="row-l"><span class="row-n">${b.n}</span><span class="row-v">近距離傷害 +${b.v}・${b.src}</span></span><span class="switch"><input type="checkbox" id="b-${b.id}" data-buff="${b.id}"><span class="track" aria-hidden="true"></span></span></label>`).join("");
+$("buffs").innerHTML=BUFFS.map(b=>`<label class="row"><span class="row-l"><span class="row-n">${b.n}</span><span class="row-v">近距離傷害&nbsp;+${b.v}・${b.src.replace(/ (?=[+-]\d)/g,"&nbsp;")}</span></span><span class="switch"><input type="checkbox" id="b-${b.id}" data-buff="${b.id}"><span class="track" aria-hidden="true"></span></span></label>`).join("");
 $("f-doll").innerHTML=DOLLS.map(d=>`<option value="${d.id}">${d.n}${d.v?` +${d.v}`:""}</option>`).join("");
 
 document.addEventListener("click",e=>{
