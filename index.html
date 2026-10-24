@@ -105,11 +105,6 @@ select{appearance:none;-webkit-appearance:none;width:100%;font:inherit;font-size
 .enc-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .enc-row label{font-size:14px;color:var(--fg2)}
 .enc-note{display:block;font-size:12px;font-weight:600;color:var(--accent)}
-.how-box>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding-inline:4px;font-size:13px;font-weight:600;color:var(--fg2);letter-spacing:.04em;width:max-content}
-.how-box>summary::-webkit-details-marker{display:none}
-.how-box>summary::after{content:"";width:6px;height:6px;border-right:2px solid var(--fg2);border-bottom:2px solid var(--fg2);transform:rotate(-45deg);transition:transform .2s}
-.how-box[open]>summary::after{transform:rotate(45deg)}
-.how-box[open]>.panel{margin-top:10px}
 .enc-row .stepper{width:150px}
 .mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--inset);border-radius:var(--r-md)}
 .mini>div{padding:8px 4px;text-align:center;min-width:0}
@@ -123,19 +118,7 @@ select{appearance:none;-webkit-appearance:none;width:100%;font:inherit;font-size
 .sub{font-size:13px;color:var(--fg2);font-variant-numeric:tabular-nums}
 .badge{font-size:12px;font-weight:600;color:var(--surface);background:var(--accent);padding:2px 9px;border-radius:999px}
 .add{appearance:none;border:1.5px dashed var(--line);background:transparent;border-radius:var(--r-lg);min-height:140px;color:var(--accent);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
-.how{gap:14px}
-.formula{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
-.formula li{font-size:15px}
-.formula b{font-weight:600}
-.sources{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;margin:0;font-size:14px}
-.sources dt{color:var(--fg2);white-space:nowrap}
-.sources dd{margin:0;min-width:0}
-.sources a{color:var(--accent);text-decoration:none}
-.sources a:hover{text-decoration:underline}
-.note{font-size:13px;color:var(--fg2);margin:0}
-.divider{height:.5px;background:var(--line);border:0;margin:0}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-@media (max-width:520px){.sources{grid-template-columns:1fr}.sources dt{margin-top:6px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <style>html{background:var(--bg);-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -192,31 +175,6 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     <div class="weapons" id="weapons"></div>
   </section>
 
-  <section>
-    <details class="how-box">
-    <summary>怎麼算的</summary>
-    <div class="panel how">
-      <ul class="formula">
-        <li><b>每刀傷害</b> = 武器骰（1～小怪傷害）＋強化（+10 另加 2，+11 起另加 5）＋武器的近距離傷害＋力量加成＋等級加成＋魔法娃娃＋狀態</li>
-        <li><b>每刀平均</b> = （小怪傷害＋1）÷ 2 ＋ 上面的固定加成；最小是骰到 1，最大是骰到小怪傷害</li>
-        <li><b>每分鐘傷害</b> = 每刀平均 × 每分鐘刀數，假設每一刀都命中；<b>每秒傷害</b> = 每分鐘傷害 ÷ 60</li>
-      </ul>
-      <hr class="divider">
-      <dl class="sources">
-        <dt>武器傷害</dt><dd><span class="tag off">官方</span> 天堂經典版遊戲百科，2026-10-24 查詢</dd>
-        <dt>強化</dt><dd><span class="tag off">官方</span> 每強化 1 級傷害 +1；7/22 更新公告：強化到 +10 另有額外傷害 +2，+11 合計 +5。+12 公告沒寫，先照 +11 的 +5 算</dd>
-        <dt>攻速</dt><dd><span class="tag meas">實測</span> 影片逐刀量測，海音村砍倉庫管理員</dd>
-        <dt>力量加成</dt><dd>照 <a href="https://lineageclassic.gamepot.org/damage-calc" target="_blank" rel="noopener">게임팟 計算器</a>的力量對照表：14 以下 +0，從 15 起每 2 點 +1；16～25 和 <a href="https://www.inven.co.kr/board/lineageclassic/6485/217" target="_blank" rel="noopener">Inven 玩家實驗</a>的結果一致。會加力量的裝備（例如力量手套 +2、力量項鍊 +1）請算進力量再填</dd>
-        <dt>等級加成</dt><dd><span class="tag">群組</span> 騎士每 10 級 +1，其他職業沒有；官方指南查不到這條</dd>
-        <dt>狀態數值</dt><dd><span class="tag off">官方</span> 遊戲百科的魔法說明和經典商城的戰鬥強化卷軸說明，2026-10-25 查詢。火焰武器和烈炎武器只能開一個；其他狀態可不可以同時疊加，官方沒有寫</dd>
-        <dt>魔法娃娃</dt><dd><span class="tag off">官方</span> 遊戲百科：野狼寶寶、雪人 +1，食人妖精王 +2（只列有加近距離傷害的娃娃）</dd>        <dt>其他假設</dt><dd><span class="tag">舊版攻略</span> 打人用小怪傷害；每刀在 1 到最大值之間平均隨機</dd>
-      </dl>
-      <hr class="divider">
-      <p class="note">傷害以 100% 命中計算，所以武器命中、強化每級 +1 命中、狀態的命中加成都不會改變結果。另外沒算進去的有：對方減傷、武器發動效果（例如雷雨之劍的電擊）、打大怪。你的設定只存在這台裝置的瀏覽器裡。</p>
-      <p class="note">玩家自製工具，數字僅供參考。</p>
-    </div>
-    </details>
-  </section>
 </div>
 
 <script>
