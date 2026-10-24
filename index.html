@@ -160,7 +160,6 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <input id="f-level" type="number" inputmode="numeric" min="1" max="99" step="1">
             <button type="button" data-step="1" data-for="f-level" aria-label="等級加 1">+</button>
           </div>
-          <p class="field-hint">限騎士，每 10 級近距離傷害 +1</p>
         </div>
         <div class="field">
           <label for="f-str">力量 STR（照角色面板）</label>
@@ -223,7 +222,7 @@ const WEAPONS=[
   {n:"精靈短劍",t:"單手劍",s:8,l:8,u:1},
   {n:"歐西斯短劍",t:"單手劍",s:4,l:4},
   {n:"短劍",t:"單手劍",s:6,l:8},
-  {n:"紅騎士之劍",t:"單手劍",s:8,l:12,str:1},
+  {n:"紅騎士之劍",t:"單手劍",s:8,l:12},
   {n:"侵略者之劍",t:"單手劍",s:9,l:11},
   {n:"大馬士革刀",t:"單手劍",s:10,l:11},
   {n:"鎖子甲破壞者",t:"單手劍",s:4,l:5,hit:10,u:1},
@@ -271,11 +270,11 @@ function calc(state){
   const buff=BUFFS.reduce((s,b)=>s+(state.buffs&&state.buffs[b.id]?b.v:0),0);
   const doll=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
   const lv=levelBonus(state.level,p.knight);
+  const sb=strBonus(state.str);  // typed panel STR as is, for every weapon (user rule 10/25)
   return state.weapons.map(x=>{
     const w=weaponByName(x.n);
     const e=w.noEnchant?0:x.e;
     const eb=e>=11?5:e>=10?2:0;  // 7/22 update: +10 extra damage +2, +11 total +5
-    const sb=strBonus(state.str+(w.str||0));
     const flat=e+eb+(w.dmg||0)+sb+lv+doll+buff+(state.other||0);
     const speed=w.t==="匕首"?p.dagger:p.sword;
     const die=state.size==="large"?w.l:w.s;
@@ -336,7 +335,6 @@ function cardHTML(x,i){
   const chips=`<span class="chip">${w.t}</span><span class="chip">${dice}</span>`+
     info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")+
     (w.u?`<span class="chip${state.undead?" chip-on":""}">對不死 +1～20</span>`:"")+
-    (w.str?`<span class="chip" id="w${i}-str"></span>`:"")+
     `<span class="chip" id="w${i}-hit" hidden></span>`;
   return `<article class="wcard" id="card-${i}">
     <div class="wtop">
@@ -381,7 +379,7 @@ function update(){
   $("f-doll").value=state.doll;
   $("derived").innerHTML=
     `<span class="chip">力量加成 <b>+${sb}</b></span>`+
-    `<span class="chip">${p.knight?`等級加成 <b>+${lv}</b>`:"妖精沒有等級加成"}</span>`+
+    `<span class="chip">${p.knight?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:"妖精沒有等級加成"}</span>`+
     `<span class="chip">魔法娃娃 <b>+${dollV}</b></span>`+
     `<span class="chip">其他加成 <b>${state.other<0?"":"+"}${state.other}</b></span>`+
     `<span class="chip">狀態 <b>+${buffSum}</b></span>`;
@@ -394,10 +392,6 @@ function update(){
   rows.forEach((r,i)=>{if(r.perMin>rows[best].perMin+1e-9)best=i;});
   rows.forEach((r,i)=>{
     $(`w${i}-eb`).textContent=r.eb?`含額外傷害 +${r.eb}`:"";
-    if(r.w.str){
-      const s1=state.str+r.w.str,b0=strBonus(state.str),b1=strBonus(s1);
-      $(`w${i}-str`).innerHTML=`力量 +${r.w.str}（面板 ${s1}，加成 `+(b1>b0?`+${b0}→<b>+${b1}</b>）`:`+${b1}）`);
-    }
     $(`r${i}-min`).textContent=fmtInt(r.min);
     $(`r${i}-avg`).textContent=fmtHalf(r.avg);
     $(`r${i}-max`).textContent=fmtInt(r.max);
