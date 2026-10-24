@@ -172,7 +172,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   </section>
 
   <section aria-labelledby="t-weap">
-    <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note">打人，用小怪傷害計算，假設每刀都命中</span></div>
+    <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note">打人，用小怪傷害計算；DPS 和每分鐘傷害以命中率上限 95% 計算</span></div>
     <div class="weapons" id="weapons"></div>
   </section>
 
@@ -233,6 +233,8 @@ const DOLLS=[
   {id:"snowman",n:"雪人",v:1},
   {id:"ogre",n:"食人妖精王",v:2}
 ];
+// DPS and per-minute damage use the 95% hit-rate cap (user's rule; old-Lineage lore, not in official docs)
+const HIT_RATE=0.95;
 function strBonus(str){return str<15?0:Math.floor((str-13)/2);}
 function levelBonus(level,isKnight){return isKnight?Math.floor(level/10):0;}
 function weaponByName(n){return WEAPONS.find(w=>w.n===n)||WEAPONS[0];}
@@ -250,7 +252,7 @@ function calc(state){
     const speed=w.t==="匕首"?p.dagger:p.sword;
     const avg=(w.s+1)/2+flat;
     // Classic: each enchant level also adds +1 hit
-    return {w,e,eb,sb,flat,speed,hit:(w.hit||0)+e,min:1+flat,max:w.s+flat,avg,perMin:avg*speed,perSec:avg*speed/60};
+    return {w,e,eb,sb,flat,speed,hit:(w.hit||0)+e,min:1+flat,max:w.s+flat,avg,perMin:avg*speed*HIT_RATE,perSec:avg*speed*HIT_RATE/60};
   });
 }
 </script>
