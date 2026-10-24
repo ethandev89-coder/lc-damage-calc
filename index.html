@@ -100,6 +100,10 @@ section{display:flex;flex-direction:column;gap:10px;min-width:0}
 .seg button{appearance:none;border:0;background:transparent;color:var(--fg);font:inherit;font-size:14px;font-weight:500;padding:7px 6px;border-radius:7px;cursor:pointer;white-space:nowrap}
 .seg button[aria-checked="true"]{background:var(--seg-on);box-shadow:var(--seg-shadow);font-weight:600}
 .inline-toggle{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;cursor:pointer}
+.switch.sm{width:40px;height:24px}
+.switch.sm .track::after{width:20px;height:20px}
+.switch.sm input:checked+.track::after{transform:translateX(16px)}
+.mini-toggle{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--fg2);cursor:pointer}
 .chip-on{background:var(--accent-soft);color:var(--accent)}
 .weapons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .wcard{position:relative;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
@@ -157,12 +161,13 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
           </div>
         </div>
         <div class="field">
-          <label for="f-str">力量 STR</label>
+          <label for="f-str">力量 STR（照角色面板）</label>
           <div class="stepper">
             <button type="button" data-step="-1" data-for="f-str" aria-label="力量減 1">−</button>
             <input id="f-str" type="number" inputmode="numeric" min="8" max="50" step="1">
             <button type="button" data-step="1" data-for="f-str" aria-label="力量加 1">+</button>
           </div>
+          <label class="mini-toggle"><span class="switch sm"><input type="checkbox" id="f-rkstr"><span class="track" aria-hidden="true"></span></span>面板含紅騎士之劍的 +1</label>
         </div>
         <div class="field">
           <label for="f-doll">魔法娃娃</label>
@@ -270,7 +275,7 @@ function calc(state){
     const w=weaponByName(x.n);
     const e=w.noEnchant?0:x.e;
     const eb=e>=11?5:e>=10?2:0;  // 7/22 update: +10 extra damage +2, +11 total +5
-    const sb=strBonus(state.str+(w.str||0));
+    const sb=strBonus(state.str-(state.rkStr?1:0)+(w.str||0));
     const flat=e+eb+(w.dmg||0)+sb+lv+doll+buff+(state.other||0);
     const speed=w.t==="匕首"?p.dagger:p.sword;
     const die=state.size==="large"?w.l:w.s;
@@ -284,7 +289,7 @@ function calc(state){
 <script>
 /* ---- UI ---- */
 const KEY="lc-dmg-calc-v2";
-const DEFAULT={preset:"dk",level:55,str:31,doll:"wolf",other:0,size:"small",undead:false,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
+const DEFAULT={preset:"dk",level:55,str:31,doll:"wolf",other:0,size:"small",undead:false,rkStr:false,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
 const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const $=id=>document.getElementById(id);
@@ -302,6 +307,7 @@ function load(){
       if(!DOLLS.some(x=>x.id===d.doll))d.doll="none";
       if(d.size!=="large")d.size="small";
       d.undead=!!d.undead;
+      d.rkStr=!!d.rkStr;
       const seen={};
       BUFFS.forEach(b=>{if(b.group&&d.buffs[b.id]){if(seen[b.group])d.buffs[b.id]=false;seen[b.group]=true;}});
       return d;
@@ -369,12 +375,13 @@ function update(){
   $("t-undead").checked=state.undead;
   $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘 <b>${p.sword}</b> 刀、匕首 <b>${p.dagger}</b> 刀 <span class="tag meas">實測</span>`;
   ["level","str","other"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
-  const sb=strBonus(state.str),lv=levelBonus(state.level,p.knight);
+  const baseStr=state.str-(state.rkStr?1:0),sb=strBonus(baseStr),lv=levelBonus(state.level,p.knight);
+  $("f-rkstr").checked=state.rkStr;
   const dollV=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
   const buffSum=BUFFS.reduce((s,b)=>s+(state.buffs[b.id]?b.v:0),0);
   $("f-doll").value=state.doll;
   $("derived").innerHTML=
-    `<span class="chip">力量加成 <b>+${sb}</b></span>`+
+    `<span class="chip">力量加成 <b>+${sb}</b>${state.rkStr?`（不含武器：力量 ${baseStr}）`:""}</span>`+
     `<span class="chip">${p.knight?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:"妖精沒有等級加成"}</span>`+
     `<span class="chip">魔法娃娃 <b>+${dollV}</b></span>`+
     `<span class="chip">其他加成 <b>${state.other<0?"":"+"}${state.other}</b></span>`+
@@ -386,7 +393,7 @@ function update(){
   rows.forEach((r,i)=>{
     $(`w${i}-eb`).textContent=r.eb?`含額外傷害 +${r.eb}`:"";
     if(r.w.str){
-      const s1=state.str+r.w.str,b0=strBonus(state.str),b1=strBonus(s1);
+      const bs=state.str-(state.rkStr?1:0),s1=bs+r.w.str,b0=strBonus(bs),b1=strBonus(s1);
       $(`w${i}-str`).innerHTML=`STR +${r.w.str}（力量 ${s1}，加成 `+(b1>b0?`+${b0}→<b>+${b1}</b>）`:`+${b1} 不變）`);
     }
     $(`r${i}-min`).textContent=fmtInt(r.min);
@@ -436,6 +443,7 @@ document.addEventListener("change",e=>{
     renderWeapons();
   }else if(t.id==="f-doll"){state.doll=t.value;update();}
   else if(t.id==="t-undead"){state.undead=t.checked;renderWeapons();}
+  else if(t.id==="f-rkstr"){state.rkStr=t.checked;update();}
   else if(t.matches("input[data-buff]")){
     const b=BUFFS.find(x=>x.id===t.dataset.buff);
     if(t.checked&&b.group)BUFFS.forEach(o=>{if(o.group===b.group)state.buffs[o.id]=false;});
