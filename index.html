@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>經典版武器傷害計算器</title>
+<meta name="description" content="選武器、強化、力量和狀態，比較天堂經典版打人時每刀與每分鐘的傷害；攻速是影片逐刀實測。">
+<meta property="og:title" content="經典版武器傷害計算器">
+<meta property="og:description" content="選武器、強化、力量和狀態，比較天堂經典版打人時每刀與每分鐘的傷害；攻速是影片逐刀實測。">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one calm column of grouped panels in a Settings-like rhythm; weapon results as an auto-fill card grid */
+:root{
+  --bg:#f5f5f7;--surface:#ffffff;--inset:#eeeef1;--seg-on:#ffffff;
+  --fg:#1d1d1f;--fg2:#6e6e73;--fg3:#8e8e93;--line:rgba(60,60,67,.16);
+  --accent:#0071e3;--accent-soft:rgba(0,113,227,.10);
+  --on:#34c759;--good:#1f8a3d;--good-soft:rgba(52,199,89,.14);--knob:#ffffff;
+  --warn:#a35a00;--warn-soft:rgba(255,159,10,.16);
+  --shadow:0 1px 1px rgba(0,0,0,.03),0 8px 24px rgba(0,0,0,.06);
+  --seg-shadow:0 1px 3px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.04);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  --r-lg:20px;--r-md:12px;--r-sm:9px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#000000;--surface:#1c1c1e;--inset:#2c2c2e;--seg-on:#636366;
+  --fg:#f5f5f7;--fg2:#a1a1a6;--fg3:#8e8e93;--line:rgba(235,235,245,.16);
+  --accent:#2997ff;--accent-soft:rgba(41,151,255,.18);
+  --on:#30d158;--good:#32d74b;--good-soft:rgba(50,215,75,.16);--knob:#ffffff;
+  --warn:#ffb340;--warn-soft:rgba(255,179,64,.16);
+  --shadow:0 0 0 .5px rgba(255,255,255,.07);--seg-shadow:0 1px 3px rgba(0,0,0,.45);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000;--surface:#1c1c1e;--inset:#2c2c2e;--seg-on:#636366;
+  --fg:#f5f5f7;--fg2:#a1a1a6;--fg3:#8e8e93;--line:rgba(235,235,245,.16);
+  --accent:#2997ff;--accent-soft:rgba(41,151,255,.18);
+  --on:#30d158;--good:#32d74b;--good-soft:rgba(50,215,75,.16);--knob:#ffffff;
+  --warn:#ffb340;--warn-soft:rgba(255,179,64,.16);
+  --shadow:0 0 0 .5px rgba(255,255,255,.07);--seg-shadow:0 1px 3px rgba(0,0,0,.45);
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:44px 64px;display:flex;flex-direction:column;gap:30px}
+header{display:flex;flex-direction:column;gap:8px}
+.eyebrow{font-size:13px;font-weight:600;color:var(--fg2);letter-spacing:.06em}
+h1{font-family:var(--display);font-size:clamp(34px,6vw,52px);font-weight:700;letter-spacing:-.025em;line-height:1.06;margin:0;text-wrap:balance}
+.lede{font-size:17px;color:var(--fg2);max-width:38em;margin:0}
+section{display:flex;flex-direction:column;gap:10px;min-width:0}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-inline:4px}
+.sec-title{font-size:13px;font-weight:600;color:var(--fg2);letter-spacing:.04em;margin:0;display:flex;align-items:center;gap:8px}
+.sec-note{font-size:13px;color:var(--fg3)}
+.panel{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.label{display:block;font-size:13px;color:var(--fg2);margin-bottom:6px}
+.hint{margin:8px 2px 0;font-size:13px;color:var(--fg2);display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.hint b{color:var(--fg);font-variant-numeric:tabular-nums}
+.basis-name{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.field{min-width:0}
+.field label{display:block;font-size:13px;color:var(--fg2);margin-bottom:6px}
+.stepper{display:flex;align-items:center;background:var(--inset);border-radius:var(--r-md);overflow:hidden}
+.stepper button{appearance:none;border:0;background:transparent;width:42px;height:42px;flex:none;font-size:22px;line-height:1;color:var(--accent);cursor:pointer}
+.stepper button:disabled{color:var(--fg3);cursor:default}
+.stepper input{flex:1;min-width:0;border:0;background:transparent;text-align:center;font:inherit;font-size:17px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums;height:42px;-moz-appearance:textfield;appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stepper input:disabled{color:var(--fg3)}
+.stepper.sm button{width:38px;height:38px;font-size:20px}
+.stepper.sm input{height:38px;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:4px 10px;border-radius:999px;background:var(--inset);color:var(--fg2)}
+.chip b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:11px;font-weight:600;line-height:1.5;padding:0 7px;border-radius:999px;background:var(--inset);color:var(--fg2);white-space:nowrap}
+.tag.off{background:var(--accent-soft);color:var(--accent)}
+.tag.meas{background:var(--good-soft);color:var(--good)}
+.tag.guess{background:var(--warn-soft);color:var(--warn)}
+.chip .tag{background:var(--surface)}
+.chip .tag.meas{background:var(--good-soft)}
+.chip .tag.guess{background:var(--warn-soft)}
+.toggles{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 2px;border-top:.5px solid var(--line);cursor:pointer}
+.row:first-child{border-top:0;padding-top:2px}
+.row:last-child{padding-bottom:2px}
+.row-l{display:flex;flex-direction:column}
+.row-n{font-size:16px;font-weight:500}
+.row-v{font-size:13px;color:var(--fg2)}
+.switch{position:relative;width:51px;height:31px;flex:none}
+.switch input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer;z-index:1}
+.switch .track{position:absolute;inset:0;border-radius:999px;background:var(--inset);transition:background .2s}
+.switch .track::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:var(--knob);box-shadow:0 2px 6px rgba(0,0,0,.22);transition:transform .2s}
+.switch input:checked+.track{background:var(--on)}
+.switch input:checked+.track::after{transform:translateX(20px)}
+.switch input:focus-visible+.track{outline:2px solid var(--accent);outline-offset:2px}
+.weapons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.wcard{position:relative;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.wcard.best{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent)}
+.wtop{display:flex;align-items:center;gap:8px}
+.selwrap{position:relative;flex:1;min-width:0}
+.selwrap::after{content:"";position:absolute;right:15px;top:50%;width:7px;height:7px;border-right:2px solid var(--fg2);border-bottom:2px solid var(--fg2);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+select{appearance:none;-webkit-appearance:none;width:100%;font:inherit;font-size:16px;font-weight:600;color:var(--fg);background:var(--inset);border:0;border-radius:var(--r-md);padding:10px 36px 10px 12px;cursor:pointer;text-overflow:ellipsis}
+.rm{appearance:none;border:0;width:32px;height:32px;flex:none;border-radius:50%;background:var(--inset);color:var(--fg2);font-size:18px;line-height:1;cursor:pointer}
+.enc-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.enc-row label{font-size:14px;color:var(--fg2)}
+.enc-row .stepper{width:150px}
+.mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--inset);border-radius:var(--r-md)}
+.mini>div{padding:8px 4px;text-align:center;min-width:0}
+.mini>div+div{border-left:.5px solid var(--line)}
+.k{font-size:12px;color:var(--fg2)}
+.mini .v{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.big{display:flex;flex-direction:column;gap:2px;padding:2px 2px 0}
+.big-head{display:flex;align-items:center;justify-content:space-between;gap:4px 8px;flex-wrap:wrap}
+.big .k{font-size:13px}
+.big .v{font-family:var(--display);font-size:36px;font-weight:700;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.sub{font-size:13px;color:var(--fg2);font-variant-numeric:tabular-nums}
+.badge{font-size:12px;font-weight:600;color:var(--surface);background:var(--accent);padding:2px 9px;border-radius:999px}
+.add{appearance:none;border:1.5px dashed var(--line);background:transparent;border-radius:var(--r-lg);min-height:140px;color:var(--accent);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+.how{gap:14px}
+.formula{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.formula li{font-size:15px}
+.formula b{font-weight:600}
+.sources{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;margin:0;font-size:14px}
+.sources dt{color:var(--fg2);white-space:nowrap}
+.sources dd{margin:0;min-width:0}
+.sources a{color:var(--accent);text-decoration:none}
+.sources a:hover{text-decoration:underline}
+.note{font-size:13px;color:var(--fg2);margin:0}
+.divider{height:.5px;background:var(--line);border:0;margin:0}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:520px){.sources{grid-template-columns:1fr}.sources dt{margin-top:6px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>html{background:var(--bg);-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">天堂經典版・打人傷害</div>
+    <h1>武器傷害計算器</h1>
+    <p class="lede">選武器、填強化和力量，勾選身上的狀態，就能比較每刀和每分鐘的傷害。攻速是用影片逐刀量出來的。</p>
+  </header>
+
+  <section aria-labelledby="t-char">
+    <div class="sec-head"><h2 class="sec-title" id="t-char">角色</h2></div>
+    <div class="panel">
+      <div>
+        <span class="label">攻速基準</span>
+        <div class="basis-name">黑暗騎士</div>
+        <p class="hint" id="preset-hint"></p>
+      </div>
+      <div class="fields">
+        <div class="field">
+          <label for="f-level">等級</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-level" aria-label="等級減 1">−</button>
+            <input id="f-level" type="number" inputmode="numeric" min="1" max="99" step="1">
+            <button type="button" data-step="1" data-for="f-level" aria-label="等級加 1">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-str">力量 STR</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-str" aria-label="力量減 1">−</button>
+            <input id="f-str" type="number" inputmode="numeric" min="8" max="50" step="1">
+            <button type="button" data-step="1" data-for="f-str" aria-label="力量加 1">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-doll">魔法娃娃</label>
+          <div class="selwrap"><select id="f-doll"></select></div>
+        </div>
+      </div>
+      <div class="chips" id="derived"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-buff">
+    <div class="sec-head"><h2 class="sec-title" id="t-buff">狀態 <span class="tag off">官方</span></h2></div>
+    <div class="panel"><div class="toggles" id="buffs"></div></div>
+  </section>
+
+  <section aria-labelledby="t-weap">
+    <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note">打人，用小怪傷害計算</span></div>
+    <div class="weapons" id="weapons"></div>
+  </section>
+
+  <section aria-labelledby="t-how">
+    <div class="sec-head"><h2 class="sec-title" id="t-how">怎麼算的</h2></div>
+    <div class="panel how">
+      <ul class="formula">
+        <li><b>每刀傷害</b> = 武器骰（1～小怪傷害）＋強化＋武器的近距離傷害＋力量加成＋等級加成＋魔法娃娃＋狀態</li>
+        <li><b>每刀平均</b> = （小怪傷害＋1）÷ 2 ＋ 上面的固定加成；最小是骰到 1，最大是骰到小怪傷害</li>
+        <li><b>每分鐘傷害</b> = 每刀平均 × 每分鐘刀數，假設每一刀都命中；<b>每秒傷害</b> = 每分鐘傷害 ÷ 60</li>
+      </ul>
+      <hr class="divider">
+      <dl class="sources">
+        <dt>武器傷害</dt><dd><span class="tag off">官方</span> 天堂經典版遊戲百科，2026-10-24 查詢</dd>
+        <dt>攻速</dt><dd><span class="tag meas">實測</span> 影片逐刀量測，海音村砍倉庫管理員</dd>
+        <dt>力量加成</dt><dd>照 <a href="https://lineageclassic.gamepot.org/damage-calc" target="_blank" rel="noopener">게임팟 計算器</a>的力量對照表：14 以下 +0，從 15 起每 2 點 +1；16～25 和 <a href="https://www.inven.co.kr/board/lineageclassic/6485/217" target="_blank" rel="noopener">Inven 玩家實驗</a>的結果一致。會加力量的裝備（例如力量手套 +2、力量項鍊 +1）請算進力量再填</dd>
+        <dt>等級加成</dt><dd><span class="tag">群組</span> 騎士每 10 級 +1，其他職業沒有；官方指南查不到這條</dd>
+        <dt>狀態數值</dt><dd><span class="tag off">官方</span> 遊戲百科的魔法說明和經典商城的戰鬥強化卷軸說明，2026-10-25 查詢。火焰武器和烈炎武器只能開一個；其他狀態可不可以同時疊加，官方沒有寫</dd>
+        <dt>魔法娃娃</dt><dd><span class="tag off">官方</span> 遊戲百科：野狼寶寶、雪人 +1，食人妖精王 +2（只列有加近距離傷害的娃娃）</dd>        <dt>其他假設</dt><dd><span class="tag">舊版攻略</span> 打人用小怪傷害；每刀在 1 到最大值之間平均隨機</dd>
+      </dl>
+      <hr class="divider">
+      <p class="note">傷害以 100% 命中計算，所以武器命中、強化每級 +1 命中、狀態的命中加成都不會改變結果。另外沒算進去的有：對方減傷、武器發動效果（例如雷雨之劍的電擊）、打大怪。你的設定只存在這台裝置的瀏覽器裡。</p>
+      <p class="note">玩家自製工具，數字僅供參考。</p>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ---- data & pure calculation (no DOM) ---- */
+const WEAPONS=[
+  {n:"細劍",t:"單手劍",s:11,l:6},
+  {n:"水晶短劍",t:"匕首",s:10,l:4,dmg:1},
+  {n:"瑟魯基之劍",t:"單手劍",s:16,l:10,hit:5},
+  {n:"古老的劍",t:"單手劍",s:40,l:25,hit:9,noEnchant:true},
+  {n:"精靈匕首",t:"匕首",s:4,l:3,hit:2},
+  {n:"武士刀",t:"單手劍",s:10,l:12,hit:1},
+  {n:"長劍",t:"單手劍",s:8,l:12},
+  {n:"闊劍",t:"單手劍",s:4,l:6},
+  {n:"彎刀",t:"單手劍",s:8,l:8},
+  {n:"小侏儒短劍",t:"單手劍",s:7,l:8},
+  {n:"精靈短劍",t:"單手劍",s:8,l:8},
+  {n:"歐西斯短劍",t:"單手劍",s:4,l:4},
+  {n:"短劍",t:"單手劍",s:6,l:8},
+  {n:"紅騎士之劍",t:"單手劍",s:8,l:12,str:1},
+  {n:"侵略者之劍",t:"單手劍",s:9,l:11},
+  {n:"大馬士革刀",t:"單手劍",s:10,l:11},
+  {n:"鎖子甲破壞者",t:"單手劍",s:4,l:5,hit:10},
+  {n:"銀長劍",t:"單手劍",s:8,l:12},
+  {n:"銀劍",t:"單手劍",s:7,l:7},
+  {n:"被遺忘的劍",t:"單手劍",s:3,l:2,hit:5},
+  {n:"黑燄之劍",t:"單手劍",s:16,l:10},
+  {n:"赤焰之劍",t:"單手劍",s:14,l:6,hit:4},
+  {n:"黃金權杖",t:"單手劍",s:14,l:14,hit:1},
+  {n:"海賊彎刀",t:"單手劍",s:11,l:6,hit:1},
+  {n:"雷雨之劍",t:"單手劍",s:13,l:12,dmg:1,hit:1,proc:"電擊"},
+  {n:"短刀",t:"單手劍",s:10,l:12,hit:1},
+  {n:"歐西斯匕首",t:"匕首",s:2,l:3,hit:2},
+  {n:"匕首",t:"匕首",s:4,l:2,hit:2},
+  {n:"骰子匕首",t:"匕首",s:3,l:3,hit:2},
+  {n:"米索莉短劍",t:"匕首",s:6,l:5,extra:"SP+1、魔力回復量+3"},
+  {n:"鋼鐵短劍",t:"匕首",s:6,l:5}
+];
+const PRESETS={
+  dk:{desc:"綠水＋勇水",sword:159.8,dagger:171.3,knight:true}
+};
+const BUFFS=[
+  {id:"berserk",n:"狂暴術",v:5,src:"魔法師魔法，防禦 -10"},
+  {id:"fire",n:"火焰武器",v:3,src:"妖精魔法，和烈炎武器擇一",excl:"blaze"},
+  {id:"blaze",n:"烈炎武器",v:5,src:"妖精魔法，命中 +3，和火焰武器擇一",excl:"fire"},
+  {id:"bless",n:"祝福魔法武器",v:2,src:"妖精、魔法師魔法，命中 +2"},
+  {id:"pseudo",n:"擬似魔法武器",v:2,src:"王族、妖精、魔法師魔法"},
+  {id:"holy",n:"神聖武器",v:1,src:"全職業魔法，命中 +1，打不死系另有加成"},
+  {id:"brave",n:"勇敢靈氣",v:3,src:"王族魔法，命中 +3"},
+  {id:"burn",n:"灼熱靈氣",v:1,src:"王族魔法，命中 +1"},
+  {id:"battle",n:"戰鬥強化卷軸",v:2,src:"經典商城，命中 +2"}
+];
+const DOLLS=[
+  {id:"none",n:"不使用",v:0},
+  {id:"wolf",n:"野狼寶寶",v:1},
+  {id:"snowman",n:"雪人",v:1},
+  {id:"ogre",n:"食人妖精王",v:2}
+];
+function strBonus(str){return str<15?0:Math.floor((str-13)/2);}
+function levelBonus(level,isKnight){return isKnight?Math.floor(level/10):0;}
+function weaponByName(n){return WEAPONS.find(w=>w.n===n)||WEAPONS[0];}
+function calc(state){
+  const p=PRESETS[state.preset]||PRESETS.dk;
+  const buff=BUFFS.reduce((s,b)=>s+(state.buffs&&state.buffs[b.id]?b.v:0),0);
+  const doll=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
+  const lv=levelBonus(state.level,p.knight);
+  return state.weapons.map(x=>{
+    const w=weaponByName(x.n);
+    const e=w.noEnchant?0:x.e;
+    const sb=strBonus(state.str+(w.str||0));
+    const flat=e+(w.dmg||0)+sb+lv+doll+buff;
+    const speed=w.t==="匕首"?p.dagger:p.sword;
+    const avg=(w.s+1)/2+flat;
+    return {w,e,sb,flat,speed,min:1+flat,max:w.s+flat,avg,perMin:avg*speed,perSec:avg*speed/60};
+  });
+}
+</script>
+<script>
+/* ---- UI ---- */
+const KEY="lc-dmg-calc-v2";
+const DEFAULT={preset:"dk",level:55,str:31,doll:"wolf",buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const $=id=>document.getElementById(id);
+const fmtInt=n=>Math.round(n).toLocaleString("zh-TW");
+const fmtHalf=n=>Number.isInteger(n)?String(n):n.toFixed(1);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let state=load();
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(KEY)||"null");
+    if(s&&Array.isArray(s.weapons)&&s.weapons.length){
+      const d=Object.assign(clone(DEFAULT),s);
+      d.weapons=d.weapons.slice(0,6).map(x=>({n:weaponByName(x.n).n,e:clamp(parseInt(x.e,10)||0,0,12)}));
+      if(!PRESETS[d.preset])d.preset="dk";
+      if(!DOLLS.some(x=>x.id===d.doll))d.doll="none";
+      return d;
+    }
+  }catch(e){}
+  return clone(DEFAULT);
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+function optionsHTML(sel){
+  return ["單手劍","匕首"].map(g=>`<optgroup label="${g}">`+
+    WEAPONS.filter(w=>w.t===g).sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n,"zh-Hant"))
+      .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}${w.alias?"（"+w.alias+"）":""}　${w.s}／${w.l}</option>`).join("")+
+    `</optgroup>`).join("");
+}
+function cardHTML(x,i){
+  const w=weaponByName(x.n);
+  const info=[w.t,`小怪 ${w.s}・大怪 ${w.l}`];
+  if(w.dmg)info.push(`近距離傷害 +${w.dmg}`);
+  if(w.str)info.push(`STR +${w.str}`);
+  if(w.hit)info.push(`命中 +${w.hit}`);
+  if(w.proc)info.push(`發動：${w.proc}`);
+  if(w.extra)info.push(w.extra);
+  if(w.noEnchant)info.push("不能強化");
+  const dis=w.noEnchant?" disabled":"";
+  return `<article class="wcard" id="card-${i}">
+    <div class="wtop">
+      <div class="selwrap"><select id="w${i}-n" data-w="${i}" aria-label="第 ${i+1} 把武器">${optionsHTML(w.n)}</select></div>
+      ${state.weapons.length>1?`<button type="button" class="rm" data-rm="${i}" aria-label="移除第 ${i+1} 把武器">×</button>`:""}
+    </div>
+    <div class="enc-row">
+      <label for="w${i}-e">強化</label>
+      <div class="stepper sm">
+        <button type="button" data-step="-1" data-for="w${i}-e" aria-label="強化減 1"${dis}>−</button>
+        <input class="enc" id="w${i}-e" data-w="${i}" type="number" inputmode="numeric" min="0" max="12" value="${w.noEnchant?0:x.e}"${dis}>
+        <button type="button" data-step="1" data-for="w${i}-e" aria-label="強化加 1"${dis}>+</button>
+      </div>
+    </div>
+    <div class="chips">${info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")}</div>
+    <div class="mini">
+      <div><div class="k">每刀最小</div><div class="v" id="r${i}-min"></div></div>
+      <div><div class="k">每刀平均</div><div class="v" id="r${i}-avg"></div></div>
+      <div><div class="k">每刀最大</div><div class="v" id="r${i}-max"></div></div>
+    </div>
+    <div class="big">
+      <div class="big-head"><span class="k">每分鐘傷害（假設 100% 命中）</span><span class="badge" id="r${i}-best" hidden>最高</span></div>
+      <div class="v" id="r${i}-pm"></div>
+      <div class="sub" id="r${i}-ps"></div>
+    </div>
+  </article>`;
+}
+function renderWeapons(){
+  $("weapons").innerHTML=state.weapons.map(cardHTML).join("")+
+    (state.weapons.length<6?`<button type="button" class="add" id="add">+ 新增武器</button>`:"");
+  update();
+}
+function update(){
+  const p=PRESETS[state.preset];
+  $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘 <b>${p.sword}</b> 刀、匕首 <b>${p.dagger}</b> 刀 <span class="tag meas">實測</span>`;
+  ["level","str"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
+  const sb=strBonus(state.str),lv=levelBonus(state.level,p.knight);
+  const dollV=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
+  const buffSum=BUFFS.reduce((s,b)=>s+(state.buffs[b.id]?b.v:0),0);
+  $("f-doll").value=state.doll;
+  $("derived").innerHTML=
+    `<span class="chip">力量加成 <b>+${sb}</b></span>`+
+    `<span class="chip">${p.knight?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:"妖精沒有等級加成"}</span>`+
+    `<span class="chip">魔法娃娃 <b>+${dollV}</b></span>`+
+    `<span class="chip">狀態 <b>+${buffSum}</b></span>`;
+  BUFFS.forEach(b=>{$("b-"+b.id).checked=!!state.buffs[b.id];});
+  const rows=calc(state);
+  let best=0;
+  rows.forEach((r,i)=>{if(r.perMin>rows[best].perMin+1e-9)best=i;});
+  rows.forEach((r,i)=>{
+    $(`r${i}-min`).textContent=fmtInt(r.min);
+    $(`r${i}-avg`).textContent=fmtHalf(r.avg);
+    $(`r${i}-max`).textContent=fmtInt(r.max);
+    $(`r${i}-pm`).textContent=fmtInt(r.perMin);
+    $(`r${i}-ps`).textContent=`每秒 ${r.perSec.toFixed(1)}・每分鐘 ${r.speed} 刀`;
+    const isBest=rows.length>1&&i===best;
+    $(`r${i}-best`).hidden=!isBest;
+    $(`card-${i}`).classList.toggle("best",isBest);
+  });
+  save();
+}
+
+$("buffs").innerHTML=BUFFS.map(b=>`<label class="row"><span class="row-l"><span class="row-n">${b.n}</span><span class="row-v">近距離傷害 +${b.v}・${b.src}</span></span><span class="switch"><input type="checkbox" id="b-${b.id}" data-buff="${b.id}"><span class="track" aria-hidden="true"></span></span></label>`).join("");
+$("f-doll").innerHTML=DOLLS.map(d=>`<option value="${d.id}">${d.n}${d.v?`（近距離傷害 +${d.v}）`:""}</option>`).join("");
+
+document.addEventListener("click",e=>{
+  const rm=e.target.closest("[data-rm]");
+  if(rm){state.weapons.splice(+rm.dataset.rm,1);renderWeapons();return;}
+  if(e.target.closest("#add")){const last=state.weapons[state.weapons.length-1];state.weapons.push({n:last.n,e:last.e});renderWeapons();return;}
+  const st=e.target.closest("[data-step]");
+  if(st){
+    const inp=$(st.dataset.for);
+    if(!inp||inp.disabled)return;
+    inp.value=clamp((parseInt(inp.value,10)||0)+Number(st.dataset.step),Number(inp.min),Number(inp.max));
+    inp.dispatchEvent(new Event("input",{bubbles:true}));
+  }
+});
+document.addEventListener("input",e=>{
+  const t=e.target,v=parseInt(t.value,10);
+  if(Number.isNaN(v))return;
+  if(["f-level","f-str"].includes(t.id)){state[t.id.slice(2)]=clamp(v,Number(t.min),Number(t.max));update();}
+  else if(t.classList.contains("enc")){state.weapons[+t.dataset.w].e=clamp(v,0,12);update();}
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.matches("select[data-w]")){
+    const i=+t.dataset.w;
+    state.weapons[i].n=t.value;
+    if(weaponByName(t.value).noEnchant)state.weapons[i].e=0;
+    renderWeapons();
+  }else if(t.id==="f-doll"){state.doll=t.value;update();}
+  else if(t.matches("input[data-buff]")){
+    const b=BUFFS.find(x=>x.id===t.dataset.buff);
+    state.buffs[b.id]=t.checked;
+    if(t.checked&&b.excl)state.buffs[b.excl]=false;
+    update();
+  }
+  else if(["f-level","f-str"].includes(t.id)){t.value=state[t.id.slice(2)];}
+  else if(t.classList.contains("enc")){t.value=state.weapons[+t.dataset.w].e;}
+});
+renderWeapons();
+</script>
+</body>
+</html>
