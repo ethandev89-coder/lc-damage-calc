@@ -218,11 +218,11 @@ const PRESETS={
 };
 const BUFFS=[
   {id:"berserk",n:"狂暴術",v:5,src:"魔法師魔法，防禦 -10"},
-  {id:"fire",n:"火焰武器",v:3,src:"妖精魔法，和烈炎武器擇一",excl:"blaze"},
-  {id:"blaze",n:"烈炎武器",v:5,src:"妖精魔法，命中 +3，和火焰武器擇一",excl:"fire"},
-  {id:"bless",n:"祝福魔法武器",v:2,src:"妖精、魔法師魔法，命中 +2"},
-  {id:"pseudo",n:"擬似魔法武器",v:2,src:"王族、妖精、魔法師魔法"},
-  {id:"holy",n:"神聖武器",v:1,src:"全職業魔法，命中 +1，打不死系另有加成"},
+  {id:"fire",n:"火焰武器",v:3,src:"妖精魔法，和烈炎武器擇一",group:"elf"},
+  {id:"blaze",n:"烈炎武器",v:5,src:"妖精魔法，命中 +3，和火焰武器擇一",group:"elf"},
+  {id:"bless",n:"祝福魔法武器",v:2,src:"妖精、魔法師魔法，命中 +2，武器魔法三選一",group:"wpn"},
+  {id:"pseudo",n:"擬似魔法武器",v:2,src:"王族、妖精、魔法師魔法，武器魔法三選一",group:"wpn"},
+  {id:"holy",n:"神聖武器",v:1,src:"全職業魔法，命中 +1，打不死系另有加成，武器魔法三選一",group:"wpn"},
   {id:"brave",n:"勇敢靈氣",v:3,src:"王族魔法，命中 +3"},
   {id:"burn",n:"灼熱靈氣",v:1,src:"王族魔法，命中 +1"},
   {id:"battle",n:"戰鬥強化卷軸",v:2,src:"經典商城，命中 +2"}
@@ -275,6 +275,8 @@ function load(){
       d.weapons=d.weapons.slice(0,6).map(x=>({n:weaponByName(x.n).n,e:clamp(parseInt(x.e,10)||0,0,12)}));
       if(!PRESETS[d.preset])d.preset="dk";
       if(!DOLLS.some(x=>x.id===d.doll))d.doll="none";
+      const seen={};
+      BUFFS.forEach(b=>{if(b.group&&d.buffs[b.id]){if(seen[b.group])d.buffs[b.id]=false;seen[b.group]=true;}});
       return d;
     }
   }catch(e){}
@@ -393,8 +395,8 @@ document.addEventListener("change",e=>{
   }else if(t.id==="f-doll"){state.doll=t.value;update();}
   else if(t.matches("input[data-buff]")){
     const b=BUFFS.find(x=>x.id===t.dataset.buff);
+    if(t.checked&&b.group)BUFFS.forEach(o=>{if(o.group===b.group)state.buffs[o.id]=false;});
     state.buffs[b.id]=t.checked;
-    if(t.checked&&b.excl)state.buffs[b.excl]=false;
     update();
   }
   else if(["f-level","f-str"].includes(t.id)){t.value=state[t.id.slice(2)];}
