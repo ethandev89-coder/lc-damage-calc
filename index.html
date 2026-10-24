@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>經典版武器傷害計算器</title>
-<meta name="description" content="選武器、強化、力量和狀態，比較天堂經典版打人時每刀與每分鐘的傷害；攻速是影片逐刀實測。">
+<meta name="description" content="選武器、強化、力量和狀態，比較天堂經典版單手劍與匕首的每刀和每秒傷害；攻速是影片逐刀實測。">
 <meta property="og:title" content="經典版武器傷害計算器">
-<meta property="og:description" content="選武器、強化、力量和狀態，比較天堂經典版打人時每刀與每分鐘的傷害；攻速是影片逐刀實測。">
+<meta property="og:description" content="選武器、強化、力量和狀態，比較天堂經典版單手劍與匕首的每刀和每秒傷害；攻速是影片逐刀實測。">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -139,7 +139,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">天堂經典版・打人傷害</div>
+    <div class="eyebrow">天堂經典版・單手劍與匕首</div>
     <h1>武器傷害計算器</h1>
     <p class="lede">選武器、填強化和力量，勾選身上的狀態，就能比較每刀傷害和每秒傷害（DPS）。攻速是用影片逐刀量出來的。</p>
   </header>
@@ -160,6 +160,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <input id="f-level" type="number" inputmode="numeric" min="1" max="99" step="1">
             <button type="button" data-step="1" data-for="f-level" aria-label="等級加 1">+</button>
           </div>
+          <p class="field-hint">限騎士，每 10 級近距離傷害 +1</p>
         </div>
         <div class="field">
           <label for="f-str">力量 STR（照角色面板）</label>
@@ -380,7 +381,7 @@ function update(){
   $("f-doll").value=state.doll;
   $("derived").innerHTML=
     `<span class="chip">力量加成 <b>+${sb}</b></span>`+
-    `<span class="chip">${p.knight?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:"妖精沒有等級加成"}</span>`+
+    `<span class="chip">${p.knight?`等級加成 <b>+${lv}</b>`:"妖精沒有等級加成"}</span>`+
     `<span class="chip">魔法娃娃 <b>+${dollV}</b></span>`+
     `<span class="chip">其他加成 <b>${state.other<0?"":"+"}${state.other}</b></span>`+
     `<span class="chip">狀態 <b>+${buffSum}</b></span>`;
