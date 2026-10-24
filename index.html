@@ -114,7 +114,8 @@ select{appearance:none;-webkit-appearance:none;width:100%;font:inherit;font-size
 .big{display:flex;flex-direction:column;gap:2px;padding:2px 2px 0}
 .big-head{display:flex;align-items:center;justify-content:space-between;gap:4px 8px;flex-wrap:wrap}
 .big .k{font-size:13px}
-.big .v{font-family:var(--display);font-size:36px;font-weight:700;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.big .v{font-family:var(--display);font-size:44px;font-weight:700;letter-spacing:-.025em;line-height:1.05;font-variant-numeric:tabular-nums}
+.wcard.best .big .v{color:var(--accent)}
 .sub{font-size:13px;color:var(--fg2);font-variant-numeric:tabular-nums}
 .badge{font-size:12px;font-weight:600;color:var(--surface);background:var(--accent);padding:2px 9px;border-radius:999px}
 .add{appearance:none;border:1.5px dashed var(--line);background:transparent;border-radius:var(--r-lg);min-height:140px;color:var(--accent);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
@@ -128,7 +129,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   <header>
     <div class="eyebrow">天堂經典版・打人傷害</div>
     <h1>武器傷害計算器</h1>
-    <p class="lede">選武器、填強化和力量，勾選身上的狀態，就能比較每刀和每分鐘的傷害。攻速是用影片逐刀量出來的。</p>
+    <p class="lede">選武器、填強化和力量，勾選身上的狀態，就能比較每刀傷害和每秒傷害（DPS）。攻速是用影片逐刀量出來的。</p>
   </header>
 
   <section aria-labelledby="t-char">
@@ -171,7 +172,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   </section>
 
   <section aria-labelledby="t-weap">
-    <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note">打人，用小怪傷害計算</span></div>
+    <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note">打人，用小怪傷害計算，假設每刀都命中</span></div>
     <div class="weapons" id="weapons"></div>
   </section>
 
@@ -248,7 +249,8 @@ function calc(state){
     const flat=e+eb+(w.dmg||0)+sb+lv+doll+buff;
     const speed=w.t==="匕首"?p.dagger:p.sword;
     const avg=(w.s+1)/2+flat;
-    return {w,e,eb,sb,flat,speed,min:1+flat,max:w.s+flat,avg,perMin:avg*speed,perSec:avg*speed/60};
+    // Classic: each enchant level also adds +1 hit
+    return {w,e,eb,sb,flat,speed,hit:(w.hit||0)+e,min:1+flat,max:w.s+flat,avg,perMin:avg*speed,perSec:avg*speed/60};
   });
 }
 </script>
@@ -289,7 +291,6 @@ function cardHTML(x,i){
   const info=[w.t,`小怪 ${w.s}・大怪 ${w.l}`];
   if(w.dmg)info.push(`近距離傷害 +${w.dmg}`);
   if(w.str)info.push(`STR +${w.str}`);
-  if(w.hit)info.push(`命中 +${w.hit}`);
   if(w.proc)info.push(`發動：${w.proc}`);
   if(w.extra)info.push(w.extra);
   if(w.noEnchant)info.push("不能強化");
@@ -307,16 +308,16 @@ function cardHTML(x,i){
         <button type="button" data-step="1" data-for="w${i}-e" aria-label="強化加 1"${dis}>+</button>
       </div>
     </div>
-    <div class="chips">${info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")}</div>
+    <div class="chips">${info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")}<span class="chip" id="w${i}-hit" hidden></span></div>
     <div class="mini">
       <div><div class="k">每刀最小</div><div class="v" id="r${i}-min"></div></div>
       <div><div class="k">每刀平均</div><div class="v" id="r${i}-avg"></div></div>
       <div><div class="k">每刀最大</div><div class="v" id="r${i}-max"></div></div>
     </div>
     <div class="big">
-      <div class="big-head"><span class="k">每分鐘傷害（假設 100% 命中）</span><span class="badge" id="r${i}-best" hidden>最高</span></div>
-      <div class="v" id="r${i}-pm"></div>
-      <div class="sub" id="r${i}-ps"></div>
+      <div class="big-head"><span class="k">每秒傷害 DPS</span><span class="badge" id="r${i}-best" hidden>最高</span></div>
+      <div class="v" id="r${i}-ps"></div>
+      <div class="sub" id="r${i}-pm"></div>
     </div>
   </article>`;
 }
@@ -347,8 +348,11 @@ function update(){
     $(`r${i}-min`).textContent=fmtInt(r.min);
     $(`r${i}-avg`).textContent=fmtHalf(r.avg);
     $(`r${i}-max`).textContent=fmtInt(r.max);
-    $(`r${i}-pm`).textContent=fmtInt(r.perMin);
-    $(`r${i}-ps`).textContent=`每秒 ${r.perSec.toFixed(1)}・每分鐘 ${r.speed} 刀`;
+    $(`r${i}-ps`).textContent=r.perSec.toFixed(1);
+    $(`r${i}-pm`).textContent=`每分鐘傷害 ${fmtInt(r.perMin)}・每分鐘 ${r.speed} 刀`;
+    const base=r.w.hit||0,hc=$(`w${i}-hit`);
+    hc.hidden=!r.hit;
+    hc.innerHTML=r.hit?`命中 <b>+${r.hit}</b>`+(r.e?`（${base?`武器 +${base}、`:""}強化 +${r.e}）`:""):"";
     const isBest=rows.length>1&&i===best;
     $(`r${i}-best`).hidden=!isBest;
     $(`card-${i}`).classList.toggle("best",isBest);
