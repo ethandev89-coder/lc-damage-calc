@@ -95,6 +95,12 @@ section{display:flex;flex-direction:column;gap:10px;min-width:0}
 .switch input:checked+.track{background:var(--on)}
 .switch input:checked+.track::after{transform:translateX(20px)}
 .switch input:focus-visible+.track{outline:2px solid var(--accent);outline-offset:2px}
+.target-bar{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;padding:12px 16px}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));background:var(--inset);border-radius:var(--r-sm);padding:2px;gap:2px;flex:1 1 220px;max-width:360px}
+.seg button{appearance:none;border:0;background:transparent;color:var(--fg);font:inherit;font-size:14px;font-weight:500;padding:7px 6px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.seg button[aria-checked="true"]{background:var(--seg-on);box-shadow:var(--seg-shadow);font-weight:600}
+.inline-toggle{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;cursor:pointer}
+.chip-on{background:var(--accent-soft);color:var(--accent)}
 .weapons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .wcard{position:relative;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .wcard.best{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent)}
@@ -182,7 +188,14 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   </section>
 
   <section aria-labelledby="t-weap">
-    <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note">打人，用小怪傷害計算；DPS 和每分鐘傷害以命中率上限 95% 計算</span></div>
+    <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note">DPS 和每分鐘傷害以命中率上限 95% 計算</span></div>
+    <div class="panel target-bar">
+      <div class="seg" role="radiogroup" aria-label="目標大小" id="size-seg">
+        <button type="button" role="radio" data-size="small">小怪・打人</button>
+        <button type="button" role="radio" data-size="large">大怪</button>
+      </div>
+      <label class="inline-toggle">不死系<span class="switch"><input type="checkbox" id="t-undead"><span class="track" aria-hidden="true"></span></span></label>
+    </div>
     <div class="weapons" id="weapons"></div>
   </section>
 
@@ -191,36 +204,36 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <script>
 /* ---- data & pure calculation (no DOM) ---- */
 const WEAPONS=[
-  {n:"細劍",t:"單手劍",s:11,l:6},
-  {n:"水晶短劍",t:"匕首",s:10,l:4,dmg:1},
+  {n:"細劍",t:"單手劍",s:11,l:6,u:1},
+  {n:"水晶短劍",t:"匕首",s:10,l:4,dmg:1,u:1},
   {n:"瑟魯基之劍",t:"單手劍",s:16,l:10,hit:5},
   {n:"古老的劍",t:"單手劍",s:40,l:25,hit:9,noEnchant:true},
-  {n:"精靈匕首",t:"匕首",s:4,l:3,hit:2},
+  {n:"精靈匕首",t:"匕首",s:4,l:3,hit:2,u:1},
   {n:"武士刀",t:"單手劍",s:10,l:12,hit:1},
   {n:"長劍",t:"單手劍",s:8,l:12},
   {n:"闊劍",t:"單手劍",s:4,l:6},
   {n:"彎刀",t:"單手劍",s:8,l:8},
   {n:"小侏儒短劍",t:"單手劍",s:7,l:8},
-  {n:"精靈短劍",t:"單手劍",s:8,l:8},
+  {n:"精靈短劍",t:"單手劍",s:8,l:8,u:1},
   {n:"歐西斯短劍",t:"單手劍",s:4,l:4},
   {n:"短劍",t:"單手劍",s:6,l:8},
   {n:"紅騎士之劍",t:"單手劍",s:8,l:12,str:1},
   {n:"侵略者之劍",t:"單手劍",s:9,l:11},
   {n:"大馬士革刀",t:"單手劍",s:10,l:11},
-  {n:"鎖子甲破壞者",t:"單手劍",s:4,l:5,hit:10},
-  {n:"銀長劍",t:"單手劍",s:8,l:12},
-  {n:"銀劍",t:"單手劍",s:7,l:7},
+  {n:"鎖子甲破壞者",t:"單手劍",s:4,l:5,hit:10,u:1},
+  {n:"銀長劍",t:"單手劍",s:8,l:12,u:1},
+  {n:"銀劍",t:"單手劍",s:7,l:7,u:1},
   {n:"被遺忘的劍",t:"單手劍",s:3,l:2,hit:5},
-  {n:"黑燄之劍",t:"單手劍",s:16,l:10},
-  {n:"赤焰之劍",t:"單手劍",s:14,l:6,hit:4},
+  {n:"黑燄之劍",t:"單手劍",s:16,l:10,u:1},
+  {n:"赤焰之劍",t:"單手劍",s:14,l:6,hit:4,u:1},
   {n:"黃金權杖",t:"單手劍",s:14,l:14,hit:1},
-  {n:"海賊彎刀",t:"單手劍",s:11,l:6,hit:1},
+  {n:"海賊彎刀",t:"單手劍",s:11,l:6,hit:1,u:1},
   {n:"雷雨之劍",t:"單手劍",s:13,l:12,dmg:1,hit:1,proc:"電擊"},
   {n:"短刀",t:"單手劍",s:10,l:12,hit:1},
   {n:"歐西斯匕首",t:"匕首",s:2,l:3,hit:2},
   {n:"匕首",t:"匕首",s:4,l:2,hit:2},
   {n:"骰子匕首",t:"匕首",s:3,l:3,hit:2},
-  {n:"米索莉短劍",t:"匕首",s:6,l:5,extra:"SP+1、魔力回復量+3"},
+  {n:"米索莉短劍",t:"匕首",s:6,l:5,extra:"SP+1、魔力回復量+3",u:1},
   {n:"鋼鐵短劍",t:"匕首",s:6,l:5}
 ];
 const PRESETS={
@@ -260,16 +273,18 @@ function calc(state){
     const sb=strBonus(state.str+(w.str||0));
     const flat=e+eb+(w.dmg||0)+sb+lv+doll+buff+(state.other||0);
     const speed=w.t==="匕首"?p.dagger:p.sword;
-    const avg=(w.s+1)/2+flat;
+    const die=state.size==="large"?w.l:w.s;
+    const ud=!!(state.undead&&w.u);  // silver/mithril/orichalcum vs undead: +1..20 per hit
+    const avg=(die+1)/2+flat+(ud?10.5:0);
     // Classic: each enchant level also adds +1 hit
-    return {w,e,eb,sb,flat,speed,hit:(w.hit||0)+e,min:1+flat,max:w.s+flat,avg,perMin:avg*speed*HIT_RATE,perSec:avg*speed*HIT_RATE/60};
+    return {w,e,eb,sb,flat,speed,ud,hit:(w.hit||0)+e,min:1+flat+(ud?1:0),max:die+flat+(ud?20:0),avg,perMin:avg*speed*HIT_RATE,perSec:avg*speed*HIT_RATE/60};
   });
 }
 </script>
 <script>
 /* ---- UI ---- */
 const KEY="lc-dmg-calc-v2";
-const DEFAULT={preset:"dk",level:55,str:31,doll:"wolf",other:0,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
+const DEFAULT={preset:"dk",level:55,str:31,doll:"wolf",other:0,size:"small",undead:false,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
 const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const $=id=>document.getElementById(id);
@@ -285,6 +300,8 @@ function load(){
       d.weapons=d.weapons.slice(0,6).map(x=>({n:weaponByName(x.n).n,e:clamp(parseInt(x.e,10)||0,0,12)}));
       if(!PRESETS[d.preset])d.preset="dk";
       if(!DOLLS.some(x=>x.id===d.doll))d.doll="none";
+      if(d.size!=="large")d.size="small";
+      d.undead=!!d.undead;
       const seen={};
       BUFFS.forEach(b=>{if(b.group&&d.buffs[b.id]){if(seen[b.group])d.buffs[b.id]=false;seen[b.group]=true;}});
       return d;
@@ -302,13 +319,19 @@ function optionsHTML(sel){
 }
 function cardHTML(x,i){
   const w=weaponByName(x.n);
-  const info=[w.t,`小怪 ${w.s}・大怪 ${w.l}`];
+  const big=state.size==="large";
+  const info=[];
   if(w.dmg)info.push(`近距離傷害 +${w.dmg}`);
-  if(w.str)info.push(`STR +${w.str}`);
   if(w.proc)info.push(`發動：${w.proc}`);
   if(w.extra)info.push(w.extra);
   if(w.noEnchant)info.push("不能強化");
   const dis=w.noEnchant?" disabled":"";
+  const dice=big?`小怪 ${w.s}・<b>大怪 ${w.l}</b>`:`<b>小怪 ${w.s}</b>・大怪 ${w.l}`;
+  const chips=`<span class="chip">${w.t}</span><span class="chip">${dice}</span>`+
+    info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")+
+    (w.u?`<span class="chip${state.undead?" chip-on":""}">對不死 +1～20</span>`:"")+
+    (w.str?`<span class="chip" id="w${i}-str"></span>`:"")+
+    `<span class="chip" id="w${i}-hit" hidden></span>`;
   return `<article class="wcard" id="card-${i}">
     <div class="wtop">
       <div class="selwrap"><select id="w${i}-n" data-w="${i}" aria-label="第 ${i+1} 把武器">${optionsHTML(w.n)}</select></div>
@@ -322,7 +345,7 @@ function cardHTML(x,i){
         <button type="button" data-step="1" data-for="w${i}-e" aria-label="強化加 1"${dis}>+</button>
       </div>
     </div>
-    <div class="chips">${info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")}<span class="chip" id="w${i}-hit" hidden></span></div>
+    <div class="chips">${chips}</div>
     <div class="mini">
       <div><div class="k">每刀最小</div><div class="v" id="r${i}-min"></div></div>
       <div><div class="k">每刀平均</div><div class="v" id="r${i}-avg"></div></div>
@@ -342,6 +365,8 @@ function renderWeapons(){
 }
 function update(){
   const p=PRESETS[state.preset];
+  document.querySelectorAll("#size-seg [data-size]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.size===state.size)));
+  $("t-undead").checked=state.undead;
   $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘 <b>${p.sword}</b> 刀、匕首 <b>${p.dagger}</b> 刀 <span class="tag meas">實測</span>`;
   ["level","str","other"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
   const sb=strBonus(state.str),lv=levelBonus(state.level,p.knight);
@@ -360,6 +385,10 @@ function update(){
   rows.forEach((r,i)=>{if(r.perMin>rows[best].perMin+1e-9)best=i;});
   rows.forEach((r,i)=>{
     $(`w${i}-eb`).textContent=r.eb?`含額外傷害 +${r.eb}`:"";
+    if(r.w.str){
+      const s1=state.str+r.w.str,b0=strBonus(state.str),b1=strBonus(s1);
+      $(`w${i}-str`).innerHTML=`STR +${r.w.str}（力量 ${s1}，加成 `+(b1>b0?`+${b0}→<b>+${b1}</b>）`:`+${b1} 不變）`);
+    }
     $(`r${i}-min`).textContent=fmtInt(r.min);
     $(`r${i}-avg`).textContent=fmtHalf(r.avg);
     $(`r${i}-max`).textContent=fmtInt(r.max);
@@ -379,6 +408,8 @@ $("buffs").innerHTML=BUFFS.map(b=>`<label class="row"><span class="row-l"><span 
 $("f-doll").innerHTML=DOLLS.map(d=>`<option value="${d.id}">${d.n}${d.v?`（近距離傷害 +${d.v}）`:""}</option>`).join("");
 
 document.addEventListener("click",e=>{
+  const sz=e.target.closest("#size-seg [data-size]");
+  if(sz){state.size=sz.dataset.size;renderWeapons();return;}
   const rm=e.target.closest("[data-rm]");
   if(rm){state.weapons.splice(+rm.dataset.rm,1);renderWeapons();return;}
   if(e.target.closest("#add")){const last=state.weapons[state.weapons.length-1];state.weapons.push({n:last.n,e:last.e});renderWeapons();return;}
@@ -404,6 +435,7 @@ document.addEventListener("change",e=>{
     if(weaponByName(t.value).noEnchant)state.weapons[i].e=0;
     renderWeapons();
   }else if(t.id==="f-doll"){state.doll=t.value;update();}
+  else if(t.id==="t-undead"){state.undead=t.checked;renderWeapons();}
   else if(t.matches("input[data-buff]")){
     const b=BUFFS.find(x=>x.id===t.dataset.buff);
     if(t.checked&&b.group)BUFFS.forEach(o=>{if(o.group===b.group)state.buffs[o.id]=false;});
