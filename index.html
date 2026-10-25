@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>經典版武器傷害計算器</title>
-<meta name="description" content="選武器、強化、力量和狀態，比較天堂經典版單手劍與匕首的每刀和每秒傷害；攻速是影片逐刀實測。">
+<meta name="description" content="選武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍的每刀和每秒傷害；攻速是影片逐刀實測。">
 <meta property="og:title" content="經典版武器傷害計算器">
-<meta property="og:description" content="選武器、強化、力量和狀態，比較天堂經典版單手劍與匕首的每刀和每秒傷害；攻速是影片逐刀實測。">
+<meta property="og:description" content="選武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍的每刀和每秒傷害；攻速是影片逐刀實測。">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -139,7 +139,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">天堂經典版・單手劍與匕首</div>
+    <div class="eyebrow">天堂經典版・單手劍、匕首、雙手劍</div>
     <h1>武器傷害計算器</h1>
     <p class="lede">選武器、填強化和力量，勾選身上的狀態，就能比較每刀傷害和每秒傷害（DPS）。攻速是用影片逐刀量出來的。</p>
   </header>
@@ -229,7 +229,7 @@ const WEAPONS=[
   {n:"鎖子甲破壞者",t:"單手劍",s:4,l:5,hit:10,u:1},
   {n:"銀長劍",t:"單手劍",s:8,l:12,u:1},
   {n:"銀劍",t:"單手劍",s:7,l:7,u:1},
-  {n:"被遺忘的劍",t:"單手劍",s:3,l:2,hit:5},
+  {n:"被遺忘的劍",t:"單手劍",s:3,l:2,hit:5,noEnchant:true},
   {n:"黑燄之劍",t:"單手劍",s:16,l:10,u:1},
   {n:"赤焰之劍",t:"單手劍",s:14,l:6,hit:4,u:1},
   {n:"黃金權杖",t:"單手劍",s:14,l:14,hit:1},
@@ -240,10 +240,14 @@ const WEAPONS=[
   {n:"匕首",t:"匕首",s:4,l:2,hit:2},
   {n:"骰子匕首",t:"匕首",s:3,l:3,hit:2},
   {n:"米索莉短劍",t:"匕首",s:6,l:5,extra:"SP+1、魔力回復量+3",u:1},
-  {n:"鋼鐵短劍",t:"匕首",s:6,l:5}
+  {n:"鋼鐵短劍",t:"匕首",s:6,l:5},
+  {n:"古老的巨劍",t:"雙手劍",s:25,l:40,hit:7,noEnchant:true},
+  {n:"巨劍",t:"雙手劍",s:17,l:14},
+  {n:"雙手劍",t:"雙手劍",s:14,l:16},
+  {n:"被遺忘的巨劍",t:"雙手劍",s:2,l:3,hit:3,noEnchant:true}
 ];
 const PRESETS={
-  dk:{desc:"綠水＋勇水",sword:159.8,dagger:171.3,knight:true}
+  dk:{desc:"綠水＋勇水",sword:159.8,dagger:171.3,twohand:141.1,knight:true}
 };
 const BUFFS=[
   {id:"berserk",n:"狂暴術",v:5,src:"魔法師魔法，防禦 -10"},
@@ -277,7 +281,7 @@ function calc(state){
     const e=w.noEnchant?0:x.e;
     const eb=e>=11?5:e>=10?2:0;  // 7/22 update: +10 extra damage +2, +11 total +5
     const flat=e+eb+(w.dmg||0)+sb+lv+doll+buff+(state.other||0);
-    const speed=w.t==="匕首"?p.dagger:p.sword;
+    const speed=w.t==="匕首"?p.dagger:w.t==="雙手劍"?p.twohand:p.sword;
     const die=state.size==="large"?w.l:w.s;
     const ud=!!(state.undead&&w.u);  // silver/mithril/orichalcum vs undead: +1..20 per hit
     const avg=(die+1)/2+flat+(ud?10.5:0);
@@ -318,7 +322,7 @@ function load(){
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 
 function optionsHTML(sel){
-  return ["單手劍","匕首"].map(g=>`<optgroup label="${g}">`+
+  return ["單手劍","匕首","雙手劍"].map(g=>`<optgroup label="${g}">`+
     WEAPONS.filter(w=>w.t===g).sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n,"zh-Hant"))
       .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}${w.alias?"（"+w.alias+"）":""}　${w.s}／${w.l}</option>`).join("")+
     `</optgroup>`).join("");
@@ -372,7 +376,7 @@ function update(){
   const p=PRESETS[state.preset];
   document.querySelectorAll("#size-seg [data-size]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.size===state.size)));
   $("t-undead").checked=state.undead;
-  $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀 <span class="tag meas">實測</span>`;
+  $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀 <span class="tag meas">實測</span>`;
   ["level","str","other"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
   const sb=strBonus(state.str),lv=levelBonus(state.level,p.knight);
   const dollV=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
