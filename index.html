@@ -263,6 +263,7 @@ const PRESETS={
 const ELF_HASTE=1.15/1.33;  // 精靈餅乾 is x1.15 for attacks vs 勇水 x1.33, so elf speeds are estimated from the knight measurements
 function speedsOf(state){
   const base=PRESETS[state.preset]||PRESETS.dk;
+  if(state.cls==="royal")return Object.assign({},base,{desc:"綠水＋惡魔之血"});  // 王族's 2nd haste; same x1.33 as 勇水
   if(state.cls!=="elf")return base;
   const r=v=>Math.round(v*ELF_HASTE*10)/10;
   return {desc:"綠水＋精靈餅乾",sword:r(base.sword),dagger:r(base.dagger),twohand:r(base.twohand),est:true};
