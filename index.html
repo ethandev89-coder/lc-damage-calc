@@ -105,7 +105,7 @@ div.row{cursor:default}
 .row-sel select{width:auto;padding:8px 34px 8px 12px}
 .chip-on{background:var(--accent-soft);color:var(--accent)}
 .chip-warn{background:var(--warn-soft);color:var(--warn);font-weight:600}
-.seg-field{max-width:none;flex:none}
+.seg-field{max-width:none;flex:none;grid-template-columns:repeat(3,minmax(0,1fr))}
 .seg-field button{padding:11px 6px;font-size:15px}
 .weapons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .wcard{position:relative;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
@@ -161,6 +161,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
           <div class="seg seg-field" role="radiogroup" aria-label="職業" id="cls-seg">
             <button type="button" role="radio" data-cls="knight">騎士</button>
             <button type="button" role="radio" data-cls="royal">王族</button>
+            <button type="button" role="radio" data-cls="elf">妖精</button>
           </div>
         </div>
         <div class="field">
@@ -251,14 +252,21 @@ const WEAPONS=[
   {n:"骰子匕首",t:"匕首",s:3,l:3,hit:2},
   {n:"米索莉短劍",t:"匕首",s:6,l:5,extra:"SP+1、魔力回復量+3",u:1},
   {n:"鋼鐵短劍",t:"匕首",s:6,l:5},
-  {n:"古老的巨劍",t:"雙手劍",s:25,l:40,hit:7,noEnchant:true},
-  {n:"巨劍",t:"雙手劍",s:17,l:14},
-  {n:"雙手劍",t:"雙手劍",s:14,l:16},
-  {n:"被遺忘的巨劍",t:"雙手劍",s:2,l:3,hit:3,noEnchant:true}
+  {n:"古老的巨劍",t:"雙手劍",s:25,l:40,hit:7,noEnchant:true,only:["王族","騎士"]},
+  {n:"巨劍",t:"雙手劍",s:17,l:14,only:["王族","騎士"]},
+  {n:"雙手劍",t:"雙手劍",s:14,l:16,only:["王族","騎士"]},
+  {n:"被遺忘的巨劍",t:"雙手劍",s:2,l:3,hit:3,noEnchant:true,only:["王族","騎士"]}
 ];
 const PRESETS={
   dk:{desc:"綠水＋勇水",sword:159.8,dagger:171.3,twohand:141.1}
 };
+const ELF_HASTE=1.15/1.33;  // 精靈餅乾 is x1.15 for attacks vs 勇水 x1.33, so elf speeds are estimated from the knight measurements
+function speedsOf(state){
+  const base=PRESETS[state.preset]||PRESETS.dk;
+  if(state.cls!=="elf")return base;
+  const r=v=>Math.round(v*ELF_HASTE*10)/10;
+  return {desc:"綠水＋精靈餅乾",sword:r(base.sword),dagger:r(base.dagger),twohand:r(base.twohand),est:true};
+}
 const BUFFS=[
   {id:"berserk",n:"狂暴術",v:5,src:"魔法師魔法，防禦 -10"},
   {id:"dance",n:"舞躍之火",v:3,src:"妖精魔法"},
@@ -279,14 +287,14 @@ const DOLLS=[
 const HIT_RATE=0.95;
 function strBonus(str){return str<15?0:Math.floor((str-13)/2);}
 function levelBonus(level,isKnight){return isKnight?Math.floor(level/10):0;}
-const CLS={knight:"騎士",royal:"王族"};
+const CLS={knight:"騎士",royal:"王族",elf:"妖精"};
 function canUse(w,cls){return !w.only||w.only.includes(CLS[cls]||"騎士");}  // only = 百科 classNames when restricted
 function weaponByName(n){return WEAPONS.find(w=>w.n===n)||WEAPONS[0];}
 function calc(state){
-  const p=PRESETS[state.preset]||PRESETS.dk;
+  const p=speedsOf(state);
   const buff=BUFFS.reduce((s,b)=>s+(state.buffs&&state.buffs[b.id]?b.v:0),0);
   const doll=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
-  const lv=levelBonus(state.level,state.cls!=="royal");  // 王族: no +1 per 10 levels
+  const lv=levelBonus(state.level,state.cls==="knight");  // only knights get +1 per 10 levels
   const sb=strBonus(state.str);  // typed panel STR as is, for every weapon (user rule 10/25)
   return state.weapons.map(x=>{
     const w=weaponByName(x.n);
@@ -322,7 +330,7 @@ function load(){
       if(!PRESETS[d.preset])d.preset="dk";
       if(!DOLLS.some(x=>x.id===d.doll))d.doll="none";
       if(d.size!=="large")d.size="small";
-      if(d.cls!=="royal")d.cls="knight";
+      if(!CLS[d.cls])d.cls="knight";
       d.undead=!!d.undead;
       delete d.rkStr;
       const seen={};
@@ -387,19 +395,20 @@ function renderWeapons(){
   update();
 }
 function update(){
-  const p=PRESETS[state.preset];
+  const p=speedsOf(state);
   document.querySelectorAll("#size-seg [data-size]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.size===state.size)));
   document.querySelectorAll("#cls-seg [data-cls]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.cls===state.cls)));
   $("t-undead").checked=state.undead;
-  $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀 <span class="tag meas">實測</span>`;
+  $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀`+
+    (p.est?"":`、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀`)+` <span class="tag ${p.est?"guess":"meas"}">${p.est?"推算":"實測"}</span>`;
   ["level","str","other"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
-  const sb=strBonus(state.str),lv=levelBonus(state.level,state.cls!=="royal");
+  const sb=strBonus(state.str),lv=levelBonus(state.level,state.cls==="knight");
   const dollV=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
   const buffSum=BUFFS.reduce((s,b)=>s+(state.buffs[b.id]?b.v:0),0);
   $("f-doll").value=state.doll;
   $("derived").innerHTML=
     `<span class="chip">力量加成 <b>+${sb}</b></span>`+
-    `<span class="chip">${state.cls!=="royal"?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:`等級加成 <b>+0</b> <span class="tag">只有騎士有</span>`}</span>`+
+    `<span class="chip">${state.cls==="knight"?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:`等級加成 <b>+0</b> <span class="tag">只有騎士有</span>`}</span>`+
     `<span class="chip">魔法娃娃 <b>+${dollV}</b></span>`+
     `<span class="chip">其他加成 <b>${state.other<0?"":"+"}${state.other}</b></span>`+
     `<span class="chip">狀態 <b>+${buffSum}</b></span>`;
