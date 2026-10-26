@@ -252,6 +252,7 @@ const WEAPONS=[
   {n:"骰子匕首",t:"匕首",s:3,l:3,hit:2},
   {n:"米索莉短劍",t:"匕首",s:6,l:5,extra:"SP+1、魔力回復量+3",u:1},
   {n:"鋼鐵短劍",t:"匕首",s:6,l:5},
+  {n:"奧里哈魯根短劍",t:"匕首",s:7,l:7,dmg:2,u:1,unreleased:true},  // 未開放: not in the 遊戲百科 yet (10/26)
   {n:"古老的巨劍",t:"雙手劍",s:25,l:40,hit:7,noEnchant:true,only:["王族","騎士"]},
   {n:"巨劍",t:"雙手劍",s:17,l:14,only:["王族","騎士"]},
   {n:"雙手劍",t:"雙手劍",s:14,l:16,only:["王族","騎士"]},
@@ -350,7 +351,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 function optionsHTML(sel){
   return ["單手劍","匕首","雙手劍"].map(g=>`<optgroup label="${g}">`+
     WEAPONS.filter(w=>w.t===g).sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n,"zh-Hant"))
-      .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}${w.alias?"（"+w.alias+"）":""}　${w.s}／${w.l}${canUse(w,state.cls)?"":`（${CLS[state.cls]}不能用）`}</option>`).join("")+
+      .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}${w.alias?"（"+w.alias+"）":""}　${w.s}／${w.l}${w.unreleased?"（未開放）":""}${canUse(w,state.cls)?"":`（${CLS[state.cls]}不能用）`}</option>`).join("")+
     `</optgroup>`).join("");
 }
 function cardHTML(x,i){
@@ -363,7 +364,8 @@ function cardHTML(x,i){
   if(w.noEnchant)info.push("不能強化");
   const dis=w.noEnchant?" disabled":"";
   const dice=big?`小怪 ${w.s}・<b>大怪 ${w.l}</b>`:`<b>小怪 ${w.s}</b>・大怪 ${w.l}`;
-  const chips=(canUse(w,state.cls)?"":`<span class="chip chip-warn">${CLS[state.cls]}不能用</span>`)+
+  const chips=(w.unreleased?`<span class="chip chip-warn">未開放</span>`:"")+
+    (canUse(w,state.cls)?"":`<span class="chip chip-warn">${CLS[state.cls]}不能用</span>`)+
     `<span class="chip">${w.t}</span><span class="chip">${dice}</span>`+
     info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")+
     (w.u?`<span class="chip${state.undead?" chip-on":""}">對不死 +1～20</span>`:"")+
