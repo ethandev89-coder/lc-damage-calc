@@ -104,6 +104,9 @@ div.row{cursor:default}
 .selwrap.row-sel{flex:none}
 .row-sel select{width:auto;padding:8px 34px 8px 12px}
 .chip-on{background:var(--accent-soft);color:var(--accent)}
+.chip-warn{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.seg-field{max-width:none;flex:none}
+.seg-field button{padding:11px 6px;font-size:15px}
 .weapons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .wcard{position:relative;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .wcard.best{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent)}
@@ -153,6 +156,13 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
         <p class="hint" id="preset-hint"></p>
       </div>
       <div class="fields">
+        <div class="field">
+          <span class="label">職業</span>
+          <div class="seg seg-field" role="radiogroup" aria-label="職業" id="cls-seg">
+            <button type="button" role="radio" data-cls="knight">騎士</button>
+            <button type="button" role="radio" data-cls="royal">王族</button>
+          </div>
+        </div>
         <div class="field">
           <label for="f-level">等級</label>
           <div class="stepper">
@@ -210,9 +220,9 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <script>
 /* ---- data & pure calculation (no DOM) ---- */
 const WEAPONS=[
-  {n:"細劍",t:"單手劍",s:11,l:6,u:1},
+  {n:"細劍",t:"單手劍",s:11,l:6,u:1,only:["騎士","妖精"]},
   {n:"水晶短劍",t:"匕首",s:10,l:4,dmg:1,u:1},
-  {n:"瑟魯基之劍",t:"單手劍",s:16,l:10,hit:5},
+  {n:"瑟魯基之劍",t:"單手劍",s:16,l:10,hit:5,only:["騎士"]},
   {n:"古老的劍",t:"單手劍",s:40,l:25,hit:9,noEnchant:true},
   {n:"精靈匕首",t:"匕首",s:4,l:3,hit:2,u:1},
   {n:"武士刀",t:"單手劍",s:10,l:12,hit:1},
@@ -230,10 +240,10 @@ const WEAPONS=[
   {n:"銀長劍",t:"單手劍",s:8,l:12,u:1},
   {n:"銀劍",t:"單手劍",s:7,l:7,u:1},
   {n:"被遺忘的劍",t:"單手劍",s:3,l:2,hit:5,noEnchant:true},
-  {n:"黑燄之劍",t:"單手劍",s:16,l:10,u:1},
-  {n:"赤焰之劍",t:"單手劍",s:14,l:6,hit:4,u:1},
-  {n:"黃金權杖",t:"單手劍",s:14,l:14,hit:1},
-  {n:"海賊彎刀",t:"單手劍",s:11,l:6,hit:1,u:1},
+  {n:"黑燄之劍",t:"單手劍",s:16,l:10,u:1,only:["騎士"]},
+  {n:"赤焰之劍",t:"單手劍",s:14,l:6,hit:4,u:1,only:["妖精"]},
+  {n:"黃金權杖",t:"單手劍",s:14,l:14,hit:1,only:["王族"]},
+  {n:"海賊彎刀",t:"單手劍",s:11,l:6,hit:1,u:1,only:["騎士","妖精"]},
   {n:"雷雨之劍",t:"單手劍",s:13,l:12,dmg:1,hit:1,proc:"電擊"},
   {n:"短刀",t:"單手劍",s:10,l:12,hit:1},
   {n:"歐西斯匕首",t:"匕首",s:2,l:3,hit:2},
@@ -247,7 +257,7 @@ const WEAPONS=[
   {n:"被遺忘的巨劍",t:"雙手劍",s:2,l:3,hit:3,noEnchant:true}
 ];
 const PRESETS={
-  dk:{desc:"綠水＋勇水",sword:159.8,dagger:171.3,twohand:141.1,knight:true}
+  dk:{desc:"綠水＋勇水",sword:159.8,dagger:171.3,twohand:141.1}
 };
 const BUFFS=[
   {id:"berserk",n:"狂暴術",v:5,src:"魔法師魔法，防禦 -10"},
@@ -269,12 +279,14 @@ const DOLLS=[
 const HIT_RATE=0.95;
 function strBonus(str){return str<15?0:Math.floor((str-13)/2);}
 function levelBonus(level,isKnight){return isKnight?Math.floor(level/10):0;}
+const CLS={knight:"騎士",royal:"王族"};
+function canUse(w,cls){return !w.only||w.only.includes(CLS[cls]||"騎士");}  // only = 百科 classNames when restricted
 function weaponByName(n){return WEAPONS.find(w=>w.n===n)||WEAPONS[0];}
 function calc(state){
   const p=PRESETS[state.preset]||PRESETS.dk;
   const buff=BUFFS.reduce((s,b)=>s+(state.buffs&&state.buffs[b.id]?b.v:0),0);
   const doll=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
-  const lv=levelBonus(state.level,p.knight);
+  const lv=levelBonus(state.level,state.cls!=="royal");  // 王族: no +1 per 10 levels
   const sb=strBonus(state.str);  // typed panel STR as is, for every weapon (user rule 10/25)
   return state.weapons.map(x=>{
     const w=weaponByName(x.n);
@@ -286,14 +298,14 @@ function calc(state){
     const ud=!!(state.undead&&w.u);  // silver/mithril/orichalcum vs undead: +1..20 per hit
     const avg=(die+1)/2+flat+(ud?10.5:0);
     // Classic: each enchant level also adds +1 hit
-    return {w,e,eb,sb,flat,speed,ud,hit:(w.hit||0)+e,min:1+flat+(ud?1:0),max:die+flat+(ud?20:0),avg,perMin:avg*speed*HIT_RATE,perSec:avg*speed*HIT_RATE/60};
+    return {w,e,eb,sb,flat,speed,ud,ok:canUse(w,state.cls),hit:(w.hit||0)+e,min:1+flat+(ud?1:0),max:die+flat+(ud?20:0),avg,perMin:avg*speed*HIT_RATE,perSec:avg*speed*HIT_RATE/60};
   });
 }
 </script>
 <script>
 /* ---- UI ---- */
 const KEY="lc-dmg-calc-v2";
-const DEFAULT={preset:"dk",level:55,str:31,doll:"wolf",other:0,size:"small",undead:false,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
+const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"small",undead:false,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
 const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const $=id=>document.getElementById(id);
@@ -310,6 +322,7 @@ function load(){
       if(!PRESETS[d.preset])d.preset="dk";
       if(!DOLLS.some(x=>x.id===d.doll))d.doll="none";
       if(d.size!=="large")d.size="small";
+      if(d.cls!=="royal")d.cls="knight";
       d.undead=!!d.undead;
       delete d.rkStr;
       const seen={};
@@ -324,7 +337,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 function optionsHTML(sel){
   return ["單手劍","匕首","雙手劍"].map(g=>`<optgroup label="${g}">`+
     WEAPONS.filter(w=>w.t===g).sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n,"zh-Hant"))
-      .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}${w.alias?"（"+w.alias+"）":""}　${w.s}／${w.l}</option>`).join("")+
+      .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}${w.alias?"（"+w.alias+"）":""}　${w.s}／${w.l}${canUse(w,state.cls)?"":`（${CLS[state.cls]}不能用）`}</option>`).join("")+
     `</optgroup>`).join("");
 }
 function cardHTML(x,i){
@@ -337,7 +350,8 @@ function cardHTML(x,i){
   if(w.noEnchant)info.push("不能強化");
   const dis=w.noEnchant?" disabled":"";
   const dice=big?`小怪 ${w.s}・<b>大怪 ${w.l}</b>`:`<b>小怪 ${w.s}</b>・大怪 ${w.l}`;
-  const chips=`<span class="chip">${w.t}</span><span class="chip">${dice}</span>`+
+  const chips=(canUse(w,state.cls)?"":`<span class="chip chip-warn">${CLS[state.cls]}不能用</span>`)+
+    `<span class="chip">${w.t}</span><span class="chip">${dice}</span>`+
     info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")+
     (w.u?`<span class="chip${state.undead?" chip-on":""}">對不死 +1～20</span>`:"")+
     `<span class="chip" id="w${i}-hit" hidden></span>`;
@@ -375,16 +389,17 @@ function renderWeapons(){
 function update(){
   const p=PRESETS[state.preset];
   document.querySelectorAll("#size-seg [data-size]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.size===state.size)));
+  document.querySelectorAll("#cls-seg [data-cls]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.cls===state.cls)));
   $("t-undead").checked=state.undead;
   $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀 <span class="tag meas">實測</span>`;
   ["level","str","other"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
-  const sb=strBonus(state.str),lv=levelBonus(state.level,p.knight);
+  const sb=strBonus(state.str),lv=levelBonus(state.level,state.cls!=="royal");
   const dollV=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
   const buffSum=BUFFS.reduce((s,b)=>s+(state.buffs[b.id]?b.v:0),0);
   $("f-doll").value=state.doll;
   $("derived").innerHTML=
     `<span class="chip">力量加成 <b>+${sb}</b></span>`+
-    `<span class="chip">${p.knight?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:"妖精沒有等級加成"}</span>`+
+    `<span class="chip">${state.cls!=="royal"?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:`等級加成 <b>+0</b> <span class="tag">只有騎士有</span>`}</span>`+
     `<span class="chip">魔法娃娃 <b>+${dollV}</b></span>`+
     `<span class="chip">其他加成 <b>${state.other<0?"":"+"}${state.other}</b></span>`+
     `<span class="chip">狀態 <b>+${buffSum}</b></span>`;
@@ -393,8 +408,8 @@ function update(){
   $("f-wmagic").value=wm?wm.id:"none";
   $("wmagic-v").innerHTML=wm?buffLine(wm):"祝福、擬似、神聖三選一";
   const rows=calc(state);
-  let best=0;
-  rows.forEach((r,i)=>{if(r.perMin>rows[best].perMin+1e-9)best=i;});
+  let best=-1;  // only weapons this class can equip compete for 最高
+  rows.forEach((r,i)=>{if(r.ok&&(best<0||r.perMin>rows[best].perMin+1e-9))best=i;});
   rows.forEach((r,i)=>{
     $(`w${i}-eb`).textContent=r.eb?`含額外傷害 +${r.eb}`:"";
     $(`r${i}-min`).textContent=fmtInt(r.min);
@@ -420,6 +435,8 @@ $("buffs").innerHTML=
 $("f-doll").innerHTML=DOLLS.map(d=>`<option value="${d.id}">${d.n}${d.v?` +${d.v}`:""}</option>`).join("");
 
 document.addEventListener("click",e=>{
+  const cs=e.target.closest("#cls-seg [data-cls]");
+  if(cs){state.cls=cs.dataset.cls;renderWeapons();return;}
   const sz=e.target.closest("#size-seg [data-size]");
   if(sz){state.size=sz.dataset.size;renderWeapons();return;}
   const rm=e.target.closest("[data-rm]");
