@@ -269,7 +269,10 @@ function speedsOf(state){
 }
 const BUFFS=[
   {id:"berserk",n:"狂暴術",v:5,src:"魔法師魔法，防禦 -10"},
-  {id:"dance",n:"舞躍之火",v:3,src:"妖精魔法"},
+  {id:"soul",n:"烈焰之魂",v:0,maxRoll:true,src:"每刀都打武器的最大傷害・妖精火屬性魔法，自己施放，128 秒"},
+  {id:"firew",n:"火焰武器",v:3,src:"妖精火屬性魔法，自己施放",group:"fire"},
+  {id:"dance",n:"舞躍之火",v:3,src:"妖精火屬性魔法，隊伍",group:"fire"},
+  {id:"blaze",n:"烈炎武器",v:5,src:"妖精火屬性魔法，自己施放，命中 +3",group:"fire"},
   {id:"bless",n:"祝福魔法武器",v:2,src:"妖精、魔法師魔法，命中 +2",group:"wpn"},
   {id:"pseudo",n:"擬似魔法武器",v:2,src:"王族、妖精、魔法師魔法",group:"wpn"},
   {id:"holy",n:"神聖武器",v:1,src:"全職業魔法，命中 +1，打不死系另有加成",group:"wpn"},
@@ -293,6 +296,7 @@ function weaponByName(n){return WEAPONS.find(w=>w.n===n)||WEAPONS[0];}
 function calc(state){
   const p=speedsOf(state);
   const buff=BUFFS.reduce((s,b)=>s+(state.buffs&&state.buffs[b.id]?b.v:0),0);
+  const maxRoll=BUFFS.some(b=>b.maxRoll&&state.buffs&&state.buffs[b.id]);  // 烈焰之魂
   const doll=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
   const lv=levelBonus(state.level,state.cls==="knight");  // only knights get +1 per 10 levels
   const sb=strBonus(state.str);  // typed panel STR as is, for every weapon (user rule 10/25)
@@ -304,9 +308,9 @@ function calc(state){
     const speed=w.t==="匕首"?p.dagger:w.t==="雙手劍"?p.twohand:p.sword;
     const die=state.size==="large"?w.l:w.s;
     const ud=!!(state.undead&&w.u);  // silver/mithril/orichalcum vs undead: +1..20 per hit
-    const avg=(die+1)/2+flat+(ud?10.5:0);
+    const avg=(maxRoll?die:(die+1)/2)+flat+(ud?10.5:0);  // 烈焰之魂: the weapon always rolls its maximum
     // Classic: each enchant level also adds +1 hit
-    return {w,e,eb,sb,flat,speed,ud,ok:canUse(w,state.cls),hit:(w.hit||0)+e,min:1+flat+(ud?1:0),max:die+flat+(ud?20:0),avg,perMin:avg*speed*HIT_RATE,perSec:avg*speed*HIT_RATE/60};
+    return {w,e,eb,sb,flat,speed,ud,ok:canUse(w,state.cls),hit:(w.hit||0)+e,min:(maxRoll?die:1)+flat+(ud?1:0),max:die+flat+(ud?20:0),avg,perMin:avg*speed*HIT_RATE,perSec:avg*speed*HIT_RATE/60};
   });
 }
 </script>
@@ -413,9 +417,7 @@ function update(){
     `<span class="chip">其他加成 <b>${state.other<0?"":"+"}${state.other}</b></span>`+
     `<span class="chip">狀態 <b>+${buffSum}</b></span>`;
   BUFFS.forEach(b=>{if(!b.group)$("b-"+b.id).checked=!!state.buffs[b.id];});
-  const wm=WPN.find(b=>state.buffs[b.id]);
-  $("f-wmagic").value=wm?wm.id:"none";
-  $("wmagic-v").innerHTML=wm?buffLine(wm):"祝福、擬似、神聖三選一";
+  GROUPS.forEach(g=>{const on=BUFFS.find(b=>b.group===g.id&&state.buffs[b.id]);$(g.sel).value=on?on.id:"none";$(g.val).innerHTML=on?buffLine(on):g.none;});
   const rows=calc(state);
   let best=-1;  // only weapons this class can equip compete for 最高
   rows.forEach((r,i)=>{if(r.ok&&(best<0||r.perMin>rows[best].perMin+1e-9))best=i;});
@@ -436,10 +438,11 @@ function update(){
   save();
 }
 
-const WPN=BUFFS.filter(b=>b.group==="wpn");
-const buffLine=b=>`近距離傷害&nbsp;+${b.v}・${b.src.replace(/ (?=[+-]\d)/g,"&nbsp;")}`;
+const GROUPS=[{id:"wpn",sel:"f-wmagic",val:"wmagic-v",n:"武器魔法",none:"祝福、擬似、神聖三選一"},
+              {id:"fire",sel:"f-fire",val:"fire-v",n:"火焰系魔法",none:"火焰武器、舞躍之火、烈炎武器三選一"}];
+const buffLine=b=>(b.maxRoll?"":`近距離傷害&nbsp;+${b.v}・`)+b.src.replace(/ (?=[+-]\d)/g,"&nbsp;");
 $("buffs").innerHTML=
-  `<div class="row"><span class="row-l"><label class="row-n" for="f-wmagic">武器魔法</label><span class="row-v" id="wmagic-v"></span></span><div class="selwrap row-sel"><select id="f-wmagic"><option value="none">不使用</option>${WPN.map(b=>`<option value="${b.id}">${b.n} +${b.v}</option>`).join("")}</select></div></div>`+
+  GROUPS.map(g=>`<div class="row"><span class="row-l"><label class="row-n" for="${g.sel}">${g.n}</label><span class="row-v" id="${g.val}"></span></span><div class="selwrap row-sel"><select id="${g.sel}" data-group="${g.id}"><option value="none">不使用</option>${BUFFS.filter(b=>b.group===g.id).map(b=>`<option value="${b.id}">${b.n} +${b.v}</option>`).join("")}</select></div></div>`).join("")+
   BUFFS.filter(b=>!b.group).map(b=>`<label class="row"><span class="row-l"><span class="row-n">${b.n}</span><span class="row-v">${buffLine(b)}</span></span><span class="switch"><input type="checkbox" id="b-${b.id}" data-buff="${b.id}"><span class="track" aria-hidden="true"></span></span></label>`).join("");
 $("f-doll").innerHTML=DOLLS.map(d=>`<option value="${d.id}">${d.n}${d.v?` +${d.v}`:""}</option>`).join("");
 
@@ -474,7 +477,7 @@ document.addEventListener("change",e=>{
     renderWeapons();
   }else if(t.id==="f-doll"){state.doll=t.value;update();}
   else if(t.id==="t-undead"){state.undead=t.checked;renderWeapons();}
-  else if(t.id==="f-wmagic"){WPN.forEach(b=>{state.buffs[b.id]=b.id===t.value;});update();}
+  else if(t.matches("select[data-group]")){BUFFS.forEach(b=>{if(b.group===t.dataset.group)state.buffs[b.id]=b.id===t.value;});update();}
   else if(t.matches("input[data-buff]")){state.buffs[t.dataset.buff]=t.checked;update();}
   else if(["f-level","f-str","f-other"].includes(t.id)){t.value=state[t.id.slice(2)];}
   else if(t.classList.contains("enc")){t.value=state.weapons[+t.dataset.w].e;}
