@@ -258,15 +258,15 @@ const WEAPONS=[
   {n:"被遺忘的巨劍",t:"雙手劍",s:2,l:3,hit:3,noEnchant:true,only:["王族","騎士"]}
 ];
 const PRESETS={
-  dk:{desc:"綠水＋勇水",sword:159.8,dagger:171.3,twohand:141.1}
+  dk:{desc:"自我加速藥水＋勇敢藥水",sword:159.8,dagger:171.3,twohand:141.1}
 };
 const ELF_HASTE=1.15/1.33;  // 精靈餅乾 is x1.15 for attacks vs 勇水 x1.33, so elf speeds are estimated from the knight measurements
 function speedsOf(state){
   const base=PRESETS[state.preset]||PRESETS.dk;
-  if(state.cls==="royal")return Object.assign({},base,{desc:"綠水＋惡魔之血"});  // 王族's 2nd haste; same x1.33 as 勇水
+  if(state.cls==="royal")return Object.assign({},base,{desc:"自我加速藥水＋惡魔之血"});  // 王族's 2nd haste; same x1.33 as 勇水
   if(state.cls!=="elf")return base;
   const r=v=>Math.round(v*ELF_HASTE*10)/10;
-  return {desc:"綠水＋精靈餅乾",sword:r(base.sword),dagger:r(base.dagger),twohand:r(base.twohand),est:true};
+  return {desc:"自我加速藥水＋精靈餅乾",sword:r(base.sword),dagger:r(base.dagger),twohand:r(base.twohand),est:true};
 }
 const BUFFS=[
   {id:"berserk",n:"狂暴術",v:5,src:"魔法師魔法，防禦 -10"},
@@ -440,7 +440,7 @@ function update(){
 }
 
 const GROUPS=[{id:"wpn",sel:"f-wmagic",val:"wmagic-v",n:"武器魔法",none:"祝福、擬似、神聖三選一"},
-              {id:"fire",sel:"f-fire",val:"fire-v",n:"火焰系魔法",none:"火焰武器、舞躍之火、烈炎武器三選一"}];
+              {id:"fire",sel:"f-fire",val:"fire-v",n:"火系魔法",none:"火焰武器、舞躍之火、烈炎武器三選一"}];
 const buffLine=b=>(b.maxRoll?"":`近距離傷害&nbsp;+${b.v}・`)+b.src.replace(/ (?=[+-]\d)/g,"&nbsp;");
 $("buffs").innerHTML=
   GROUPS.map(g=>`<div class="row"><span class="row-l"><label class="row-n" for="${g.sel}">${g.n}</label><span class="row-v" id="${g.val}"></span></span><div class="selwrap row-sel"><select id="${g.sel}" data-group="${g.id}"><option value="none">不使用</option>${BUFFS.filter(b=>b.group===g.id).map(b=>`<option value="${b.id}">${b.n} +${b.v}</option>`).join("")}</select></div></div>`).join("")+
