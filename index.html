@@ -192,7 +192,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <input id="f-other" type="number" inputmode="numeric" min="-20" max="50" step="1">
             <button type="button" data-step="1" data-for="f-other" aria-label="其他加成加 1">+</button>
           </div>
-          <p class="field-hint">其他沒列到的近距離傷害<span class="nowrap">（例如傲慢的遺產）</span></p>
+          <p class="field-hint">其他沒列到的近距離傷害</p>
         </div>
       </div>
       <div class="chips" id="derived"></div>
@@ -281,7 +281,8 @@ const BUFFS=[
   {id:"holy",n:"神聖武器",v:1,src:"全職業魔法，命中 +1，打不死系另有加成",group:"wpn"},
   {id:"brave",n:"勇敢靈氣",v:3,src:"王族魔法，命中 +3"},
   {id:"burn",n:"灼熱靈氣",v:1,src:"王族魔法，命中 +1"},
-  {id:"battle",n:"戰鬥強化卷軸",v:2,src:"經典商城，命中 +2"}
+  {id:"battle",n:"戰鬥強化卷軸",v:2,src:"經典商城，命中 +2"},
+  {id:"pride",n:"傲慢的遺產",v:1,src:"命中 +3"}  // in-game tooltip (10/29); not in the 百科
 ];
 const DOLLS=[
   {id:"none",n:"不使用",v:0},
