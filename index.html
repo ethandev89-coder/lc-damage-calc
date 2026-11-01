@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>經典版武器傷害計算器</title>
-<meta name="description" content="選武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍的每刀和每秒傷害；攻速是影片逐刀實測。">
+<meta name="description" content="選職業、武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖的每刀和每秒傷害；攻速是影片逐刀實測。">
 <meta property="og:title" content="經典版武器傷害計算器">
-<meta property="og:description" content="選武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍的每刀和每秒傷害；攻速是影片逐刀實測。">
+<meta property="og:description" content="選職業、武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖的每刀和每秒傷害；攻速是影片逐刀實測。">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -108,7 +108,8 @@ div.row{cursor:default}
 .row-sel select{width:auto;padding:8px 34px 8px 12px}
 .chip-on{background:var(--accent-soft);color:var(--accent)}
 .chip-warn{background:var(--warn-soft);color:var(--warn);font-weight:600}
-.seg-field{max-width:none;flex:none;grid-template-columns:repeat(3,minmax(0,1fr))}
+.seg-field{max-width:none;flex:none;grid-template-columns:repeat(4,minmax(0,1fr))}
+.field-cls{grid-column:1/-1}.field-cls .seg-field{max-width:440px}
 .seg-field button{padding:11px 6px;font-size:15px}
 .weapons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .wcard{position:relative;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
@@ -145,7 +146,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">天堂經典版・單手劍、匕首、雙手劍</div>
+    <div class="eyebrow">天堂經典版・單手劍、匕首、雙手劍、魔杖</div>
     <h1>武器傷害計算器</h1>
     <p class="lede">選武器、填強化和力量，勾選身上的狀態，就能比較每刀傷害和每秒傷害（DPS）。攻速是用影片逐刀量出來的。</p>
   </header>
@@ -159,12 +160,13 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
         <p class="hint" id="preset-hint"></p>
       </div>
       <div class="fields">
-        <div class="field">
+        <div class="field field-cls">
           <span class="label">職業</span>
           <div class="seg seg-field" role="radiogroup" aria-label="職業" id="cls-seg">
             <button type="button" role="radio" data-cls="knight">騎士</button>
             <button type="button" role="radio" data-cls="royal">王族</button>
             <button type="button" role="radio" data-cls="elf">妖精</button>
+            <button type="button" role="radio" data-cls="mage">法師</button>
           </div>
         </div>
         <div class="field">
@@ -189,20 +191,20 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
           <div class="selwrap"><select id="f-doll"></select></div>
         </div>
         <div class="field">
-          <label for="f-other">其他加成</label>
+          <label for="f-other">其他近距離傷害加成</label>
           <div class="stepper">
-            <button type="button" data-step="-1" data-for="f-other" aria-label="其他加成減 1">−</button>
+            <button type="button" data-step="-1" data-for="f-other" aria-label="其他近距離傷害加成減 1">−</button>
             <input id="f-other" type="number" inputmode="numeric" min="-20" max="50" step="1">
-            <button type="button" data-step="1" data-for="f-other" aria-label="其他加成加 1">+</button>
+            <button type="button" data-step="1" data-for="f-other" aria-label="其他近距離傷害加成加 1">+</button>
           </div>
           <p class="field-hint">其他沒列到的近距離傷害</p>
         </div>
         <div class="field">
-          <label for="f-hadj">其他命中加成</label>
+          <label for="f-hadj">其他近距離命中加成</label>
           <div class="stepper">
-            <button type="button" data-step="-1" data-for="f-hadj" aria-label="其他命中加成減 1">−</button>
+            <button type="button" data-step="-1" data-for="f-hadj" aria-label="其他近距離命中加成減 1">−</button>
             <input id="f-hadj" type="number" inputmode="numeric" min="-30" max="30" step="1">
-            <button type="button" data-step="1" data-for="f-hadj" aria-label="其他命中加成加 1">+</button>
+            <button type="button" data-step="1" data-for="f-hadj" aria-label="其他近距離命中加成加 1">+</button>
           </div>
           <p class="field-hint">其他沒列到的近距離命中，打人才會用到</p>
         </div>
@@ -259,9 +261,9 @@ const WEAPONS=[
   {n:"細劍",t:"單手劍",s:11,l:6,u:1,only:["騎士","妖精"]},
   {n:"水晶短劍",t:"匕首",s:10,l:4,dmg:1,u:1},
   {n:"瑟魯基之劍",t:"單手劍",s:16,l:10,hit:5,only:["騎士"]},
-  {n:"古老的劍",t:"單手劍",s:40,l:25,hit:9,noEnchant:true},
+  {n:"古老的劍",t:"單手劍",s:40,l:25,hit:9,noEnchant:true,only:["王族","騎士","妖精"]},
   {n:"精靈匕首",t:"匕首",s:4,l:3,hit:2,u:1},
-  {n:"武士刀",t:"單手劍",s:10,l:12,hit:1},
+  {n:"武士刀",t:"單手劍",s:10,l:12,hit:1,only:["王族","騎士","妖精"]},
   {n:"長劍",t:"單手劍",s:8,l:12},
   {n:"闊劍",t:"單手劍",s:4,l:6},
   {n:"彎刀",t:"單手劍",s:8,l:8},
@@ -271,18 +273,18 @@ const WEAPONS=[
   {n:"短劍",t:"單手劍",s:6,l:8},
   {n:"紅騎士之劍",t:"單手劍",s:8,l:12},
   {n:"侵略者之劍",t:"單手劍",s:9,l:11},
-  {n:"大馬士革刀",t:"單手劍",s:10,l:11},
+  {n:"大馬士革刀",t:"單手劍",s:10,l:11,only:["王族","騎士","妖精"]},
   {n:"鎖子甲破壞者",t:"單手劍",s:4,l:5,hit:10,u:1},
   {n:"銀長劍",t:"單手劍",s:8,l:12,u:1},
   {n:"銀劍",t:"單手劍",s:7,l:7,u:1},
-  {n:"被遺忘的劍",t:"單手劍",s:3,l:2,hit:5,noEnchant:true},
+  {n:"被遺忘的劍",t:"單手劍",s:3,l:2,hit:5,noEnchant:true,only:["王族","騎士","妖精"]},
   {n:"黑燄之劍",t:"單手劍",s:16,l:10,u:1,only:["騎士"]},
   {n:"赤焰之劍",t:"單手劍",s:14,l:6,hit:4,u:1,only:["妖精"]},
   {n:"黃金權杖",t:"單手劍",s:14,l:14,hit:1,only:["王族"]},
   {n:"海賊彎刀",t:"單手劍",s:11,l:6,hit:1,u:1,only:["騎士","妖精"]},
-  {n:"雷雨之劍",t:"單手劍",s:13,l:12,dmg:1,hit:1,proc:"電擊"},
+  {n:"雷雨之劍",t:"單手劍",s:13,l:12,dmg:1,hit:1,proc:"電擊",only:["王族","騎士","妖精"]},
   {n:"南瓜長劍",t:"單手劍",s:10,l:10,dmg:1,hit:1,proc:"南瓜封鎖",event:true},  // 萬聖節 event 10/28–11/11 (sold as 萬聖節南瓜長劍)
-  {n:"短刀",t:"單手劍",s:10,l:12,hit:1},
+  {n:"短刀",t:"單手劍",s:10,l:12,hit:1,only:["王族","騎士","妖精"]},
   {n:"歐西斯匕首",t:"匕首",s:2,l:3,hit:2},
   {n:"匕首",t:"匕首",s:4,l:2,hit:2},
   {n:"骰子匕首",t:"匕首",s:3,l:3,hit:2},
@@ -292,15 +294,29 @@ const WEAPONS=[
   {n:"古老的巨劍",t:"雙手劍",s:25,l:40,hit:7,noEnchant:true,only:["王族","騎士"]},
   {n:"巨劍",t:"雙手劍",s:17,l:14,only:["王族","騎士"]},
   {n:"雙手劍",t:"雙手劍",s:14,l:16,only:["王族","騎士"]},
-  {n:"被遺忘的巨劍",t:"雙手劍",s:2,l:3,hit:3,noEnchant:true,only:["王族","騎士"]}
+  {n:"被遺忘的巨劍",t:"雙手劍",s:2,l:3,hit:3,noEnchant:true,only:["王族","騎士"]},
+  // 魔杖: the 遊戲百科 category (11/2). 發動 effects are shown, not counted, like 雷雨之劍's 電擊
+  {n:"天使魔杖",t:"魔杖",s:12,l:12,proc:"起死回生術",extra:"INT+1、魔力回復量+4",only:["魔法師"]},
+  {n:"力量魔法杖",t:"魔杖",s:9,l:9,dmg:3,extra:"STR+3、SP-2",only:["魔法師"]},
+  {n:"美基魔法杖",t:"魔杖",s:4,l:5,only:["魔法師"]},
+  {n:"橡木魔法杖",t:"魔杖",s:3,l:4},
+  {n:"瑪那魔杖",t:"魔杖",s:3,l:3,hit:-3,extra:"魔力吸收",only:["魔法師"]},
+  {n:"巫術魔法杖",t:"魔杖",s:2,l:3,extra:"SP+1",only:["魔法師"]},
+  {n:"冰之女王魔杖",t:"魔杖",s:2,l:3,hit:3,proc:"冰錐",only:["魔法師"]},
+  {n:"巴風特魔杖",t:"魔杖",s:2,l:3,dmg:5,hit:7,proc:"地裂術",only:["魔法師"]},
+  {n:"巴列斯魔杖",t:"魔杖",s:2,l:3,extra:"SP+2、魔力回復量+10",only:["魔法師"]},
+  {n:"水晶魔杖",t:"魔杖",s:1,l:1,extra:"魔力回復量+10",only:["魔法師"]},
+  {n:"惡魔魔杖",t:"魔杖",s:1,l:1,extra:"SP+5",only:["魔法師"]}
 ];
 const PRESETS={
   dk:{desc:"自我加速藥水＋勇敢藥水",sword:159.8,dagger:171.3,twohand:141.1}
 };
+const MAGE_HASTE=3/4;  // 法師 has no 2nd speed-up (user, 11/1): the knight speeds without 勇水's x4/3 (10/28 knight dagger with one off: 128.5)
 const ELF_HASTE=1.15/1.33;  // 精靈餅乾 is x1.15 for attacks vs 勇水 x1.33, so elf speeds are estimated from the knight measurements
 function speedsOf(state){
   const base=PRESETS[state.preset]||PRESETS.dk;
   if(state.cls==="royal")return Object.assign({},base,{desc:"自我加速藥水＋惡魔之血"});  // 王族's 2nd haste; same x1.33 as 勇水
+  if(state.cls==="mage"){const m=v=>Math.round(v*MAGE_HASTE*10)/10;return {desc:"自我加速藥水（法師沒有二段加速）",sword:m(base.sword),dagger:m(base.dagger),twohand:m(base.twohand),est:true,mage:true};}
   if(state.cls!=="elf")return base;
   const r=v=>Math.round(v*ELF_HASTE*10)/10;
   return {desc:"自我加速藥水＋精靈餅乾",sword:r(base.sword),dagger:r(base.dagger),twohand:r(base.twohand),est:true};
@@ -341,8 +357,9 @@ function baseHitOf(state,p){
 }
 function strBonus(str){return str<15?0:Math.floor((str-13)/2);}
 function levelBonus(level,isKnight){return isKnight?Math.floor(level/10):0;}
-const CLS={knight:"騎士",royal:"王族",elf:"妖精"};
-function canUse(w,cls){return !w.only||w.only.includes(CLS[cls]||"騎士");}  // only = 百科 classNames when restricted
+const CLS={knight:"騎士",royal:"王族",elf:"妖精",mage:"法師"};
+const BAIKE_CLS={mage:"魔法師"};  // the 遊戲百科 name where it differs
+function canUse(w,cls){return !w.only||w.only.includes(BAIKE_CLS[cls]||CLS[cls]||"騎士");}  // only = 百科 classNames when restricted
 function weaponByName(n){return WEAPONS.find(w=>w.n===n)||WEAPONS[0];}
 function calc(state){
   const p=speedsOf(state);
@@ -403,7 +420,7 @@ function load(){
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 
 function optionsHTML(sel){
-  return ["單手劍","匕首","雙手劍"].map(g=>`<optgroup label="${g}">`+
+  return ["單手劍","匕首","雙手劍","魔杖"].map(g=>`<optgroup label="${g}">`+
     WEAPONS.filter(w=>w.t===g).sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n,"zh-Hant"))
       .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}${w.alias?"（"+w.alias+"）":""}　${w.s}／${w.l}${w.unreleased?"（未開放）":""}${w.event?"（活動）":""}${canUse(w,state.cls)?"":`（${CLS[state.cls]}不能用）`}</option>`).join("")+
     `</optgroup>`).join("");
@@ -464,8 +481,9 @@ function update(){
   const pvp=state.size==="pvp";
   $("pvp-panel").hidden=!pvp;$("undead-wrap").hidden=pvp;
   $("hit-note").textContent=pvp?"DPS 和每分鐘傷害以推算的命中率計算":"DPS 和每分鐘傷害以命中率上限 95% 計算";
-  $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀`+
-    (p.est?"":`、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀`)+` <span class="tag ${p.est?"guess":"meas"}">${p.est?"推算":"實測"}</span>`;
+  $("preset-hint").innerHTML=`${p.desc}：${p.mage?"單手劍、魔杖":"單手劍"}每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀`+
+    (p.est?"":`、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀`)+` <span class="tag ${p.est?"guess":"meas"}">${p.est?"推算":"實測"}</span>`+
+    (p.mage?"<br>只算近戰普攻，不計魔法攻擊（武器發動的魔法也不算）":"");
   ["level","str","other","tac","tdr","hadj"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
   const sb=strBonus(state.str),lv=levelBonus(state.level,state.cls==="knight");
   const dollV=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
@@ -475,7 +493,7 @@ function update(){
     `<span class="chip">力量加成 <b>+${sb}</b></span>`+
     `<span class="chip">${state.cls==="knight"?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:`等級加成 <b>+0</b> <span class="tag">只有騎士有</span>`}</span>`+
     `<span class="chip">魔法娃娃 <b>+${dollV}</b></span>`+
-    `<span class="chip">其他加成 <b>${state.other<0?"":"+"}${state.other}</b></span>`+
+    `<span class="chip">其他傷害加成 <b>${state.other<0?"":"+"}${state.other}</b></span>`+
     `<span class="chip">狀態 <b>+${buffSum}</b></span>`+
     (pvp?`<span class="chip">命中（不含武器）<b>${Math.round(baseHitOf(state,p))}</b></span>`:"");
   BUFFS.forEach(b=>{if(!b.group)$("b-"+b.id).checked=!!state.buffs[b.id];});
