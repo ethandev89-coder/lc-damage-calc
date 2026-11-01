@@ -197,6 +197,15 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
           </div>
           <p class="field-hint">其他沒列到的近距離傷害</p>
         </div>
+        <div class="field">
+          <label for="f-hadj">其他命中加成</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-hadj" aria-label="其他命中加成減 1">−</button>
+            <input id="f-hadj" type="number" inputmode="numeric" min="-30" max="30" step="1">
+            <button type="button" data-step="1" data-for="f-hadj" aria-label="其他命中加成加 1">+</button>
+          </div>
+          <p class="field-hint">其他沒列到的近距離命中，打人才會用到</p>
+        </div>
       </div>
       <div class="chips" id="derived"></div>
     </div>
@@ -236,15 +245,6 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <button type="button" data-step="1" data-for="f-tdr" aria-label="對象傷害減免加 1">+</button>
           </div>
           <p class="field-hint">每刀扣掉的固定傷害，最低 0<span class="nowrap">（例如增幅防禦）</span></p>
-        </div>
-        <div class="field">
-          <label for="f-hadj">命中修正</label>
-          <div class="stepper">
-            <button type="button" data-step="-1" data-for="f-hadj" aria-label="命中修正減 1">−</button>
-            <input id="f-hadj" type="number" inputmode="numeric" min="-30" max="30" step="1">
-            <button type="button" data-step="1" data-for="f-hadj" aria-label="命中修正加 1">+</button>
-          </div>
-          <p class="field-hint">實測命中率對不上時用來校正</p>
         </div>
       </div>
     </div>
