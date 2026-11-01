@@ -330,7 +330,8 @@ const BUFFS=[
   {id:"holy",n:"神聖武器",v:1,hit:1,src:"全職業魔法，命中 +1，打不死系另有加成",group:"wpn"},
   {id:"brave",n:"勇敢靈氣",v:3,hit:3,src:"王族魔法，命中 +3"},
   {id:"burn",n:"灼熱靈氣",v:1,hit:1,src:"王族魔法，命中 +1"},
-  {id:"battle",n:"戰鬥強化卷軸",v:2,hit:2,src:"經典商城，命中 +2"}
+  {id:"battle",n:"戰鬥強化卷軸",v:2,hit:2,src:"經典商城，命中 +2"},
+  {id:"spike",n:"尖刺盔甲",v:0,hit:5,src:"近距離命中 +5・騎士技能，自己施放"}  // 百科 spell #88, 1,200 s
 ];
 const DOLLS=[
   {id:"none",n:"不使用",v:0},
@@ -521,7 +522,7 @@ function update(){
 
 const GROUPS=[{id:"wpn",sel:"f-wmagic",val:"wmagic-v",n:"武器魔法",none:"祝福、擬似、神聖三選一"},
               {id:"fire",sel:"f-fire",val:"fire-v",n:"火系魔法",none:"火焰武器、舞躍之火、烈炎武器三選一"}];
-const buffLine=b=>(b.maxRoll?"":`近距離傷害&nbsp;+${b.v}・`)+b.src.replace(/ (?=[+-]\d)/g,"&nbsp;");
+const buffLine=b=>(b.maxRoll||!b.v?"":`近距離傷害&nbsp;+${b.v}・`)+b.src.replace(/ (?=[+-]\d)/g,"&nbsp;");
 $("buffs").innerHTML=
   GROUPS.map(g=>`<div class="row"><span class="row-l"><label class="row-n" for="${g.sel}">${g.n}</label><span class="row-v" id="${g.val}"></span></span><div class="selwrap row-sel"><select id="${g.sel}" data-group="${g.id}"><option value="none">不使用</option>${BUFFS.filter(b=>b.group===g.id).map(b=>`<option value="${b.id}">${b.n} +${b.v}</option>`).join("")}</select></div></div>`).join("")+
   BUFFS.filter(b=>!b.group).map(b=>`<label class="row"><span class="row-l"><span class="row-n">${b.n}</span><span class="row-v">${buffLine(b)}</span></span><span class="switch"><input type="checkbox" id="b-${b.id}" data-buff="${b.id}"><span class="track" aria-hidden="true"></span></span></label>`).join("");
