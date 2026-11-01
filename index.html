@@ -497,9 +497,9 @@ function rangedBaseHit(state){
   return rangedHitValue(state.level,state.dex)+buffHit+(rdollById(state.rdoll).hit||0)+(state.rhadj||0);
 }
 function calcRanged(state){
-  const p=bowSpeedOf(state.cls),a=arrowById(state.arrow),doll=rdollById(state.rdoll),pvp=state.size==="pvp";
+  const p=bowSpeedOf(state.rcls),a=arrowById(state.arrow),doll=rdollById(state.rdoll),pvp=state.size==="pvp";  // 遠距離 has its own class
   const buff=RBUFFS.reduce((s,b)=>s+(state.buffs&&state.buffs[b.id]?b.v:0),0);
-  const lv=rangedLevelBonus(state.level,state.cls==="elf"),baseHit=rangedBaseHit(state);
+  const lv=rangedLevelBonus(state.level,state.rcls==="elf"),baseHit=rangedBaseHit(state);
   return state.bows.map(x=>{
     const w=bowByName(x.n);
     const e=w.noEnchant?0:x.e;
@@ -510,7 +510,7 @@ function calcRanged(state){
     const ud=!!(state.undead&&a.u&&!pvp);  // silver/mithril arrows vs undead: +1..20 (lcinfo looks at the arrow only)
     const st=dmgStats(die,flat,ud,pvp?state.tdr||0:0);
     const hit=(w.hit||0)+e,hitRate=pvp?rangedRate(baseHit+hit,state.tac,state.ter):HIT_MAX;  // each enchant level is +1 hit, as for melee
-    return {w,a,e,eb,flat,die,speed:p.bow,ud,ok:canUse(w,state.cls),hit,hitRate,min:st.min,max:st.max,avg:st.avg,perMin:st.avg*p.bow*hitRate,perSec:st.avg*p.bow*hitRate/60};
+    return {w,a,e,eb,flat,die,speed:p.bow,ud,ok:canUse(w,state.rcls),hit,hitRate,min:st.min,max:st.max,avg:st.avg,perMin:st.avg*p.bow*hitRate,perSec:st.avg*p.bow*hitRate/60};
   });
 }
 </script>
@@ -518,7 +518,7 @@ function calcRanged(state){
 /* ---- UI ---- */
 const KEY="lc-dmg-calc-v2";
 const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"pvp",undead:false,tac:-40,tdr:0,hadj:0,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}],
-  mode:"melee",dex:30,arrow:"arrow",rdoll:"wolf",rother:0,rhadj:0,ter:0,bows:[{n:"十字弓",e:7},{n:"赤焰之弓",e:7},{n:"熾炎天使弓",e:7},{n:"沙哈之弓",e:7}]};  // 遠距離 keeps its own cards, stat, arrow, doll and bonuses
+  mode:"melee",rcls:"elf",dex:30,arrow:"arrow",rdoll:"wolf",rother:0,rhadj:0,ter:0,bows:[{n:"十字弓",e:7},{n:"赤焰之弓",e:7},{n:"熾炎天使弓",e:7},{n:"沙哈之弓",e:7}]};  // 遠距離 keeps its own class (default 妖精), cards, stat, arrow, doll and bonuses
 const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const $=id=>document.getElementById(id);
@@ -539,6 +539,7 @@ function load(){
       if(!["pvp","small","large"].includes(d.size))d.size="small";
       delete d.beta;delete d.betaSet;  // the Beta switch, removed in v43
       if(!CLS[d.cls])d.cls="knight";
+      if(!CLS[d.rcls])d.rcls="elf";
       d.undead=!!d.undead;
       d.tac=clamp(Math.round(+d.tac)||0,-120,10);d.tdr=clamp(Math.round(+d.tdr)||0,0,30);d.hadj=clamp(Math.round(+d.hadj)||0,-30,30);
       delete d.rkStr;
@@ -568,10 +569,10 @@ function optionsHTML(sel){
 }
 function bowOptionsHTML(sel){
   return BOWS.slice().sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n,"zh-Hant"))
-    .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}　${w.s}／${w.l}${w.event?"（活動）":""}${canUse(w,state.cls)?"":`（${CLS[state.cls]}不能用）`}</option>`).join("");
+    .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}　${w.s}／${w.l}${w.event?"（活動）":""}${canUse(w,state.rcls)?"":`（${CLS[state.rcls]}不能用）`}</option>`).join("");
 }
 function cardHTML(x,i){
-  const bow=state.mode==="ranged",a=arrowById(state.arrow);  // 遠距離: a bow card, and its dice add the arrow's
+  const bow=state.mode==="ranged",a=arrowById(state.arrow),c=bow?state.rcls:state.cls;  // 遠距離: a bow card, and its dice add the arrow's
   const w=bow?bowByName(x.n):weaponByName(x.n);
   const big=state.size==="large";
   const info=[];
@@ -586,7 +587,7 @@ function cardHTML(x,i){
   const ds=bow?`${w.s}＋${a.s}`:w.s,dl=bow?`${w.l}＋${a.l}`:w.l,unit=bow?"箭":"刀",noun=bow?"弓":"武器";
   const dice=big?`小怪 ${ds}・<b>大怪 ${dl}</b>`:`<b>小怪 ${ds}</b>・大怪 ${dl}`;
   const chips=(w.unreleased?`<span class="chip chip-warn">未開放</span>`:"")+(w.event?`<span class="chip">活動</span>`:"")+
-    (canUse(w,state.cls)?"":`<span class="chip chip-warn">${CLS[state.cls]}不能用</span>`)+
+    (canUse(w,c)?"":`<span class="chip chip-warn">${CLS[c]}不能用</span>`)+
     (bow?"":`<span class="chip">${w.t}</span>`)+`<span class="chip">${dice}</span>`+
     info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")+
     (w.u?`<span class="chip${state.undead&&state.size!=="pvp"?" chip-on":""}">對不死 +1～20</span>`:"")+
@@ -626,9 +627,9 @@ function renderWeapons(){
   update();
 }
 function rangedDerivedHTML(pvp){
-  const lv=rangedLevelBonus(state.level,state.cls==="elf"),buffSum=RBUFFS.reduce((s,b)=>s+(state.buffs[b.id]?b.v:0),0);
+  const lv=rangedLevelBonus(state.level,state.rcls==="elf"),buffSum=RBUFFS.reduce((s,b)=>s+(state.buffs[b.id]?b.v:0),0);
   return `<span class="chip">敏捷加成 <b>+${dexBonus(state.dex)}</b></span>`+
-    `<span class="chip">${state.cls==="elf"?`等級加成 <b>+${lv}</b> <span class="tag">妖精每 10 級 +1</span>`:`等級加成 <b>+0</b> <span class="tag">只有妖精有</span>`}</span>`+
+    `<span class="chip">${state.rcls==="elf"?`等級加成 <b>+${lv}</b> <span class="tag">妖精每 10 級 +1</span>`:`等級加成 <b>+0</b> <span class="tag">只有妖精有</span>`}</span>`+
     `<span class="chip">魔法娃娃 <b>+${rdollById(state.rdoll).v}</b></span>`+
     `<span class="chip">其他傷害加成 <b>${state.rother<0?"":"+"}${state.rother}</b></span>`+
     `<span class="chip">狀態 <b>+${buffSum}</b></span>`+
@@ -636,11 +637,11 @@ function rangedDerivedHTML(pvp){
 }
 function update(){
   const bow=state.mode==="ranged";
-  const p=bow?bowSpeedOf(state.cls):speedsOf(state);
+  const p=bow?bowSpeedOf(state.rcls):speedsOf(state);
   document.querySelectorAll("#mode-seg [data-mode]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.mode===state.mode)));
   document.querySelectorAll("[data-show]").forEach(el=>{el.hidden=el.dataset.show!==state.mode;});
   document.querySelectorAll("#size-seg [data-size]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.size===state.size)));
-  document.querySelectorAll("#cls-seg [data-cls]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.cls===state.cls)));
+  document.querySelectorAll("#cls-seg [data-cls]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.cls===(bow?state.rcls:state.cls))));
   $("t-undead").checked=state.undead;
   const pvp=state.size==="pvp";
   $("pvp-panel").hidden=!pvp;$("undead-wrap").hidden=pvp;
@@ -712,7 +713,7 @@ document.addEventListener("click",e=>{
   const md=e.target.closest("#mode-seg [data-mode]");
   if(md){state.mode=md.dataset.mode;renderWeapons();return;}
   const cs=e.target.closest("#cls-seg [data-cls]");
-  if(cs){state.cls=cs.dataset.cls;renderWeapons();return;}
+  if(cs){state[state.mode==="ranged"?"rcls":"cls"]=cs.dataset.cls;renderWeapons();return;}  // each side keeps its own class
   const sz=e.target.closest("#size-seg [data-size]");
   if(sz){state.size=sz.dataset.size;renderWeapons();return;}
   const rm=e.target.closest("[data-rm]");
