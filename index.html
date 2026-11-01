@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>經典版武器傷害計算器</title>
-<meta name="description" content="選職業、武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖的每刀和每秒傷害；攻速是影片逐刀實測。">
+<meta name="description" content="選職業、武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖的每刀和每秒傷害；打人會照對方 AC 算命中率，攻速以騎士的影片逐刀實測為準。">
 <meta property="og:title" content="經典版武器傷害計算器">
-<meta property="og:description" content="選職業、武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖的每刀和每秒傷害；攻速是影片逐刀實測。">
+<meta property="og:description" content="選職業、武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖的每刀和每秒傷害；打人會照對方 AC 算命中率，攻速以騎士的影片逐刀實測為準。">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -148,7 +148,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   <header>
     <div class="eyebrow">天堂經典版・單手劍、匕首、雙手劍、魔杖</div>
     <h1>武器傷害計算器</h1>
-    <p class="lede">選武器、填強化和力量，勾選身上的狀態，就能比較每刀傷害和每秒傷害（DPS）。攻速是用影片逐刀量出來的。</p>
+    <p class="lede">選職業和武器，填強化、力量和狀態，就能比較每刀傷害和每秒傷害（DPS）。打人會照對方的 AC 算命中率；攻速用騎士的影片逐刀實測，其他職業照這個推算。</p>
   </header>
 
   <section aria-labelledby="t-char">
@@ -237,7 +237,6 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <input id="f-tac" type="number" inputmode="numeric" min="-120" max="10" step="1">
             <button type="button" data-step="1" data-for="f-tac" aria-label="對象 AC加 1">+</button>
           </div>
-          <p class="field-hint">對方的防禦，越負越難打中</p>
         </div>
         <div class="field">
           <label for="f-tdr">對象傷害減免</label>
@@ -246,7 +245,6 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <input id="f-tdr" type="number" inputmode="numeric" min="0" max="30" step="1">
             <button type="button" data-step="1" data-for="f-tdr" aria-label="對象傷害減免加 1">+</button>
           </div>
-          <p class="field-hint">每刀扣掉的固定傷害<span class="nowrap">（例如增幅防禦）</span></p>
         </div>
       </div>
     </div>
