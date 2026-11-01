@@ -314,7 +314,7 @@ const ELF_HASTE=1.15/1.33;  // 精靈餅乾 is x1.15 for attacks vs 勇水 x1.33
 function speedsOf(state){
   const base=PRESETS[state.preset]||PRESETS.dk;
   if(state.cls==="royal")return Object.assign({},base,{desc:"自我加速藥水＋惡魔之血"});  // 王族's 2nd haste; same x1.33 as 勇水
-  if(state.cls==="mage"){const m=v=>Math.round(v*MAGE_HASTE*10)/10;return {desc:"自我加速藥水（法師沒有二段加速）",sword:m(base.sword),dagger:m(base.dagger),twohand:m(base.twohand),est:true,mage:true};}
+  if(state.cls==="mage"){const m=v=>Math.round(v*MAGE_HASTE*10)/10;return {desc:"自我加速藥水",sword:m(base.sword),dagger:m(base.dagger),twohand:m(base.twohand),est:true,mage:true};}
   if(state.cls!=="elf")return base;
   const r=v=>Math.round(v*ELF_HASTE*10)/10;
   return {desc:"自我加速藥水＋精靈餅乾",sword:r(base.sword),dagger:r(base.dagger),twohand:r(base.twohand),est:true};
@@ -428,7 +428,7 @@ function cardHTML(x,i){
   const big=state.size==="large";
   const info=[];
   if(w.dmg)info.push(`近距離傷害 +${w.dmg}`);
-  if(w.proc)info.push(`發動：${w.proc}`);
+  if(w.proc)info.push(`發動：${w.proc}`,"不計魔法發動傷害");
   if(w.extra)info.push(w.extra);
   if(w.noEnchant)info.push("不能強化");
   const dis=w.noEnchant?" disabled":"";
@@ -480,8 +480,7 @@ function update(){
   $("pvp-panel").hidden=!pvp;$("undead-wrap").hidden=pvp;
   $("hit-note").textContent=pvp?"DPS 和每分鐘傷害以推算的命中率計算":"DPS 和每分鐘傷害以命中率上限 95% 計算";
   $("preset-hint").innerHTML=`${p.desc}：${p.mage?"單手劍、魔杖":"單手劍"}每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀`+
-    (p.est?"":`、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀`)+` <span class="tag ${p.est?"guess":"meas"}">${p.est?"推算":"實測"}</span>`+
-    (p.mage?"<br>只算近戰普攻，不計魔法攻擊（武器發動的魔法也不算）":"");
+    (p.est?"":`、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀`)+` <span class="tag ${p.est?"guess":"meas"}">${p.est?"推算":"實測"}</span>`;
   ["level","str","other","tac","tdr","hadj"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
   const sb=strBonus(state.str),lv=levelBonus(state.level,state.cls==="knight");
   const dollV=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
