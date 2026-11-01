@@ -55,7 +55,7 @@ section{display:flex;flex-direction:column;gap:10px;min-width:0}
 .sec-title{font-size:13px;font-weight:600;color:var(--fg2);letter-spacing:.04em;margin:0;display:flex;align-items:center;gap:8px}
 .sec-note{font-size:13px;color:var(--fg3)}
 .beta-note{margin:0 2px;font-size:12px;line-height:1.6;color:var(--fg3);word-break:keep-all;overflow-wrap:anywhere;text-wrap:pretty}
-#size-seg.has-pvp{grid-template-columns:repeat(3,minmax(0,1fr))}
+#size-seg{grid-template-columns:repeat(3,minmax(0,1fr))}
 [hidden]{display:none!important}
 .panel{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
 .label{display:block;font-size:13px;color:var(--fg2);margin-bottom:6px}
@@ -211,12 +211,11 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note" id="hit-note">DPS 和每分鐘傷害以命中率上限 95% 計算</span></div>
     <div class="panel target-bar">
       <div class="seg" role="radiogroup" aria-label="目標" id="size-seg">
-        <button type="button" role="radio" data-size="pvp" hidden>打人</button>
-        <button type="button" role="radio" data-size="small">小怪・打人</button>
+        <button type="button" role="radio" data-size="pvp">打人</button>
+        <button type="button" role="radio" data-size="small">小怪</button>
         <button type="button" role="radio" data-size="large">大怪</button>
       </div>
       <label class="inline-toggle" id="undead-wrap">不死系<span class="switch"><input type="checkbox" id="t-undead"><span class="track" aria-hidden="true"></span></span></label>
-      <label class="inline-toggle" id="beta-wrap">Beta 命中率<span class="switch"><input type="checkbox" id="t-beta"><span class="track" aria-hidden="true"></span></span></label>
     </div>
     <div class="panel" id="pvp-panel">
       <div class="fields">
@@ -325,8 +324,8 @@ const DOLLS=[
   {id:"snowman",n:"雪人",v:1,hit:1},
   {id:"ogre",n:"食人妖精王",v:2,hit:2}
 ];
-// Beta hit model (推測, 11/1): 즐겜러파문's Classic PvP formula (YouTube AgkbQEHfMZg, 2026-04-28; lcinfo.io uses the same code).
-// It fits our 8 PvP clips and 도건's tests (13 points, chi2 18). hit = (STR - 8) + level + weapon hit + enchant + buff/doll hit
+// PvP hit model (推測, 11/1): 즐겜러파문's Classic PvP formula (YouTube AgkbQEHfMZg, 2026-04-28; lcinfo.io uses the same code).
+// It fits our 13 PvP clips and 도건's tests (18 points, chi2 27). hit = (STR - 8) + level + weapon hit + enchant + buff/doll hit
 // + correction, no class bonus. Each hit point is worth 1/max(8,|AC|); for AC <= -8 the rate is (hit + 6.5)/|AC| - 50%; 5..95%.
 const HIT_MIN=0.05, HIT_MAX=0.95;
 function hitValue(level,str){return Math.max(1,Math.min(59,str))-8+level;}
@@ -371,7 +370,7 @@ function calc(state){
 <script>
 /* ---- UI ---- */
 const KEY="lc-dmg-calc-v2";
-const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"pvp",beta:true,betaSet:false,undead:false,tac:-40,tdr:0,hadj:0,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
+const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"pvp",undead:false,tac:-40,tdr:0,hadj:0,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
 const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const $=id=>document.getElementById(id);
@@ -387,9 +386,8 @@ function load(){
       d.weapons=d.weapons.slice(0,6).map(x=>({n:weaponByName(x.n).n,e:clamp(parseInt(x.e,10)||0,0,12)}));
       if(!PRESETS[d.preset])d.preset="dk";
       if(!DOLLS.some(x=>x.id===d.doll))d.doll="none";
-      d.beta=s.betaSet?!!d.beta:DEFAULT.beta;d.betaSet=!!s.betaSet;  // v42: on unless the visitor switched it off
       if(!["pvp","small","large"].includes(d.size))d.size="small";
-      if(!d.beta&&d.size==="pvp")d.size="small";  // 打人 exists only with the Beta switch on
+      delete d.beta;delete d.betaSet;  // the Beta switch, removed in v43
       if(!CLS[d.cls])d.cls="knight";
       d.undead=!!d.undead;
       d.tac=clamp(Math.round(+d.tac)||0,-120,10);d.tdr=clamp(Math.round(+d.tdr)||0,0,30);d.hadj=clamp(Math.round(+d.hadj)||0,-30,30);
@@ -463,13 +461,9 @@ function update(){
   document.querySelectorAll("#size-seg [data-size]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.size===state.size)));
   document.querySelectorAll("#cls-seg [data-cls]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.cls===state.cls)));
   $("t-undead").checked=state.undead;
-  $("t-beta").checked=!!state.beta;
-  document.querySelector('#size-seg [data-size="pvp"]').hidden=!state.beta;
-  $("size-seg").classList.toggle("has-pvp",!!state.beta);
-  document.querySelector('#size-seg [data-size="small"]').textContent=state.beta?"小怪":"小怪・打人";
   const pvp=state.size==="pvp";
   $("pvp-panel").hidden=!pvp;$("undead-wrap").hidden=pvp;
-  $("hit-note").textContent=pvp?"Beta：命中率為推測":"DPS 和每分鐘傷害以命中率上限 95% 計算";
+  $("hit-note").textContent=pvp?"DPS 和每分鐘傷害以推算的命中率計算":"DPS 和每分鐘傷害以命中率上限 95% 計算";
   $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀`+
     (p.est?"":`、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀`)+` <span class="tag ${p.est?"guess":"meas"}">${p.est?"推算":"實測"}</span>`;
   ["level","str","other","tac","tdr","hadj"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
@@ -547,7 +541,6 @@ document.addEventListener("change",e=>{
     renderWeapons();
   }else if(t.id==="f-doll"){state.doll=t.value;update();}
   else if(t.id==="t-undead"){state.undead=t.checked;renderWeapons();}
-  else if(t.id==="t-beta"){state.beta=t.checked;state.betaSet=true;if(state.beta)state.size="pvp";else if(state.size==="pvp")state.size="small";renderWeapons();}
   else if(t.matches("select[data-group]")){BUFFS.forEach(b=>{if(b.group===t.dataset.group)state.buffs[b.id]=b.id===t.value;});update();}
   else if(t.matches("input[data-buff]")){state.buffs[t.dataset.buff]=t.checked;update();}
   else if(["f-level","f-str","f-other","f-tac","f-tdr","f-hadj"].includes(t.id)){t.value=state[t.id.slice(2)];}
