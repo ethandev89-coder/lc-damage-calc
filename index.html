@@ -184,7 +184,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <input id="f-str" type="number" inputmode="numeric" min="8" max="50" step="1">
             <button type="button" data-step="1" data-for="f-str" aria-label="力量加 1">+</button>
           </div>
-          <p class="field-hint">照角色面板填，含裝備和體魄強健術</p>
+          <p class="field-hint">照角色面板填，不計入武器提供的力量</p>
         </div>
         <div class="field">
           <label for="f-doll">魔法娃娃</label>
@@ -269,7 +269,7 @@ const WEAPONS=[
   {n:"精靈短劍",t:"單手劍",s:8,l:8,u:1},
   {n:"歐西斯短劍",t:"單手劍",s:4,l:4},
   {n:"短劍",t:"單手劍",s:6,l:8},
-  {n:"紅騎士之劍",t:"單手劍",s:8,l:12},
+  {n:"紅騎士之劍",t:"單手劍",s:8,l:12,str:1},
   {n:"侵略者之劍",t:"單手劍",s:9,l:11},
   {n:"大馬士革刀",t:"單手劍",s:10,l:11,only:["王族","騎士","妖精"]},
   {n:"鎖子甲破壞者",t:"單手劍",s:4,l:5,hit:10,u:1},
@@ -295,7 +295,7 @@ const WEAPONS=[
   {n:"被遺忘的巨劍",t:"雙手劍",s:2,l:3,hit:3,noEnchant:true,only:["王族","騎士"]},
   // 魔杖: the 遊戲百科 category (11/2). 發動 effects are shown, not counted, like 雷雨之劍's 電擊
   {n:"天使魔杖",t:"魔杖",s:12,l:12,proc:"起死回生術",extra:"INT+1、魔力回復量+4",only:["魔法師"]},
-  {n:"力量魔法杖",t:"魔杖",s:9,l:9,dmg:3,extra:"STR+3、SP-2",only:["魔法師"]},
+  {n:"力量魔法杖",t:"魔杖",s:9,l:9,dmg:3,str:3,extra:"SP-2",only:["魔法師"]},
   {n:"美基魔法杖",t:"魔杖",s:4,l:5,only:["魔法師"]},
   {n:"橡木魔法杖",t:"魔杖",s:3,l:4},
   {n:"瑪那魔杖",t:"魔杖",s:3,l:3,hit:-3,extra:"魔力吸收",only:["魔法師"]},
@@ -365,20 +365,20 @@ function calc(state){
   const maxRoll=BUFFS.some(b=>b.maxRoll&&state.buffs&&state.buffs[b.id]);  // 烈焰之魂
   const doll=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
   const lv=levelBonus(state.level,state.cls==="knight");  // only knights get +1 per 10 levels
-  const sb=strBonus(state.str);  // typed panel STR as is, for every weapon (user rule 10/25)
   const baseHit=baseHitOf(state,p),pvp=state.size==="pvp";  // 小怪／大怪: no PvE hit data, so the 95% cap as on the main page
   return state.weapons.map(x=>{
     const w=weaponByName(x.n);
     const e=w.noEnchant?0:x.e;
     const eb=e>=11?5:e>=10?2:0;  // 7/22 update: +10 extra damage +2, +11 total +5
+    const ws=state.str+(w.str||0),sb=strBonus(ws);  // panel STR leaves out weapon STR; each weapon adds its own (user, 11/2)
     const flat=e+eb+(w.dmg||0)+sb+lv+doll+buff+(state.other||0);
     const speed=w.t==="匕首"?p.dagger:w.t==="雙手劍"?p.twohand:p.sword;
     const die=state.size==="large"?w.l:w.s;
     const ud=!!(state.undead&&w.u&&!pvp);  // silver/mithril/orichalcum vs undead: +1..20 per hit
     const st=dmgStats(die,flat,ud,pvp?state.tdr||0:0,maxRoll);
     // Classic: each enchant level also adds +1 hit
-    const hit=(w.hit||0)+e,hitRate=pvp?hitRateOf(baseHit+hit,state.tac):HIT_MAX;
-    return {w,e,eb,sb,flat,speed,ud,ok:canUse(w,state.cls),hit,hitRate,min:st.min,max:st.max,avg:st.avg,perMin:st.avg*speed*hitRate,perSec:st.avg*speed*hitRate/60};
+    const sh=hitValue(state.level,ws)-hitValue(state.level,state.str),hit=(w.hit||0)+e+sh,hitRate=pvp?hitRateOf(baseHit+hit,state.tac):HIT_MAX;
+    return {w,e,eb,sb,sh,flat,speed,ud,ok:canUse(w,state.cls),hit,hitRate,min:st.min,max:st.max,avg:st.avg,perMin:st.avg*speed*hitRate,perSec:st.avg*speed*hitRate/60};
   });
 }
 </script>
@@ -428,6 +428,7 @@ function cardHTML(x,i){
   const big=state.size==="large";
   const info=[];
   if(w.dmg)info.push(`近距離傷害 +${w.dmg}`);
+  if(w.str)info.push(`力量 +${w.str}`);
   if(w.proc)info.push(`發動：${w.proc}`,"不計魔法發動傷害");
   if(w.extra)info.push(w.extra);
   if(w.noEnchant)info.push("不能強化");
@@ -507,7 +508,8 @@ function update(){
     $(`r${i}-pm`).textContent=`每分鐘傷害 ${fmtInt(r.perMin)}・每分鐘 ${r.speed} 刀`;
     const base=r.w.hit||0,hc=$(`w${i}-hit`);
     hc.hidden=!r.hit;
-    hc.innerHTML=r.hit?`命中 <b>+${r.hit}</b>`+(r.e?`（${base?`武器 +${base}、`:""}強化 +${r.e}）`:""):"";
+    const sg=v=>(v>0?"+":"")+v,parts=[base?`武器 ${sg(base)}`:"",r.sh?`力量 ${sg(r.sh)}`:"",r.e?`強化 +${r.e}`:""].filter(Boolean);
+    hc.innerHTML=r.hit?`命中 <b>${sg(r.hit)}</b>`+(r.e||r.sh?`（${parts.join("、")}）`:""):"";
     $(`w${i}-hr`).hidden=!pvp;
     $(`w${i}-hr`).innerHTML=`預估命中率 <b>${Math.round(r.hitRate*100)}%</b>`;
     const isBest=rows.length>1&&i===best;
