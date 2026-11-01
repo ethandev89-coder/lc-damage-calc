@@ -371,7 +371,7 @@ function calc(state){
 <script>
 /* ---- UI ---- */
 const KEY="lc-dmg-calc-v2";
-const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"small",beta:false,undead:false,tac:-40,tdr:0,hadj:0,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
+const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"pvp",beta:true,betaSet:false,undead:false,tac:-40,tdr:0,hadj:0,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
 const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const $=id=>document.getElementById(id);
@@ -387,7 +387,7 @@ function load(){
       d.weapons=d.weapons.slice(0,6).map(x=>({n:weaponByName(x.n).n,e:clamp(parseInt(x.e,10)||0,0,12)}));
       if(!PRESETS[d.preset])d.preset="dk";
       if(!DOLLS.some(x=>x.id===d.doll))d.doll="none";
-      d.beta=!!d.beta;
+      d.beta=s.betaSet?!!d.beta:DEFAULT.beta;d.betaSet=!!s.betaSet;  // v42: on unless the visitor switched it off
       if(!["pvp","small","large"].includes(d.size))d.size="small";
       if(!d.beta&&d.size==="pvp")d.size="small";  // 打人 exists only with the Beta switch on
       if(!CLS[d.cls])d.cls="knight";
@@ -547,7 +547,7 @@ document.addEventListener("change",e=>{
     renderWeapons();
   }else if(t.id==="f-doll"){state.doll=t.value;update();}
   else if(t.id==="t-undead"){state.undead=t.checked;renderWeapons();}
-  else if(t.id==="t-beta"){state.beta=t.checked;if(state.beta)state.size="pvp";else if(state.size==="pvp")state.size="small";renderWeapons();}
+  else if(t.id==="t-beta"){state.beta=t.checked;state.betaSet=true;if(state.beta)state.size="pvp";else if(state.size==="pvp")state.size="small";renderWeapons();}
   else if(t.matches("select[data-group]")){BUFFS.forEach(b=>{if(b.group===t.dataset.group)state.buffs[b.id]=b.id===t.value;});update();}
   else if(t.matches("input[data-buff]")){state.buffs[t.dataset.buff]=t.checked;update();}
   else if(["f-level","f-str","f-other","f-tac","f-tdr","f-hadj"].includes(t.id)){t.value=state[t.id.slice(2)];}
