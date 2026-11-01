@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>經典版武器傷害計算器</title>
-<meta name="description" content="選職業、武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖的每刀和每秒傷害；打人會照對方 AC 算命中率。">
+<meta name="description" content="選職業、武器、強化和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖和弓的每刀和每秒傷害；打人會照對方 AC 算命中率。">
 <meta property="og:title" content="經典版武器傷害計算器">
-<meta property="og:description" content="選職業、武器、強化、力量和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖的每刀和每秒傷害；打人會照對方 AC 算命中率。">
+<meta property="og:description" content="選職業、武器、強化和狀態，比較天堂經典版單手劍、匕首、雙手劍、魔杖和弓的每刀和每秒傷害；打人會照對方 AC 算命中率。">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -111,6 +111,8 @@ div.row{cursor:default}
 .seg-field{max-width:none;flex:none;grid-template-columns:repeat(4,minmax(0,1fr))}
 .field-cls{grid-column:1/-1}.field-cls .seg-field{max-width:440px}
 .seg-field button{padding:11px 6px;font-size:15px}
+#mode-seg{grid-template-columns:repeat(2,minmax(0,1fr));max-width:280px;margin-top:8px}
+.undead-note{font-size:13px;font-weight:400;color:var(--fg3)}
 .weapons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .wcard{position:relative;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .wcard.best{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent)}
@@ -146,9 +148,13 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">天堂經典版・單手劍、匕首、雙手劍、魔杖</div>
+    <div class="eyebrow">天堂經典版・單手劍、匕首、雙手劍、魔杖、弓</div>
     <h1>武器傷害計算器</h1>
-    <p class="lede">選職業和武器，填強化、力量和狀態，就能比較每刀傷害和每秒傷害（DPS）。打人會照對方的 AC 算命中率。</p>
+    <p class="lede" id="lede">選職業和武器，填強化、力量和狀態，就能比較每刀傷害和每秒傷害（DPS）。打人會照對方的 AC 算命中率。</p>
+    <div class="seg seg-field" role="radiogroup" aria-label="近距離或遠距離" id="mode-seg">
+      <button type="button" role="radio" data-mode="melee">近距離</button>
+      <button type="button" role="radio" data-mode="ranged">遠距離</button>
+    </div>
   </header>
 
   <section aria-labelledby="t-char">
@@ -156,7 +162,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     <div class="panel">
       <div>
         <span class="label">攻速基準</span>
-        <div class="basis-name">黑暗騎士</div>
+        <div class="basis-name" id="basis-name">黑暗騎士</div>
         <p class="hint" id="preset-hint"></p>
       </div>
       <div class="fields">
@@ -177,7 +183,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <button type="button" data-step="1" data-for="f-level" aria-label="等級加 1">+</button>
           </div>
         </div>
-        <div class="field">
+        <div class="field" data-show="melee">
           <label for="f-str">力量 STR</label>
           <div class="stepper">
             <button type="button" data-step="-1" data-for="f-str" aria-label="力量減 1">−</button>
@@ -186,11 +192,28 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
           </div>
           <p class="field-hint">照角色面板填，含防具、飾品和體魄強健術，不含武器的力量</p>
         </div>
-        <div class="field">
+        <div class="field" data-show="ranged" hidden>
+          <label for="f-dex">敏捷 DEX</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-dex" aria-label="敏捷減 1">−</button>
+            <input id="f-dex" type="number" inputmode="numeric" min="1" max="60" step="1">
+            <button type="button" data-step="1" data-for="f-dex" aria-label="敏捷加 1">+</button>
+          </div>
+          <p class="field-hint">照角色面板填，含裝備和通暢氣脈術</p>
+        </div>
+        <div class="field" data-show="ranged" hidden>
+          <label for="f-arrow">箭</label>
+          <div class="selwrap"><select id="f-arrow"></select></div>
+        </div>
+        <div class="field" data-show="melee">
           <label for="f-doll">魔法娃娃</label>
           <div class="selwrap"><select id="f-doll"></select></div>
         </div>
-        <div class="field">
+        <div class="field" data-show="ranged" hidden>
+          <label for="f-rdoll">魔法娃娃</label>
+          <div class="selwrap"><select id="f-rdoll"></select></div>
+        </div>
+        <div class="field" data-show="melee">
           <label for="f-other">近距離傷害加成</label>
           <div class="stepper">
             <button type="button" data-step="-1" data-for="f-other" aria-label="近距離傷害加成減 1">−</button>
@@ -199,7 +222,16 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
           </div>
           <p class="field-hint">其他沒列到的近距離傷害</p>
         </div>
-        <div class="field">
+        <div class="field" data-show="ranged" hidden>
+          <label for="f-rother">遠距離傷害加成</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-rother" aria-label="遠距離傷害加成減 1">−</button>
+            <input id="f-rother" type="number" inputmode="numeric" min="-20" max="50" step="1">
+            <button type="button" data-step="1" data-for="f-rother" aria-label="遠距離傷害加成加 1">+</button>
+          </div>
+          <p class="field-hint">其他沒列到的遠距離傷害</p>
+        </div>
+        <div class="field" data-show="melee">
           <label for="f-hadj">近距離命中加成</label>
           <div class="stepper">
             <button type="button" data-step="-1" data-for="f-hadj" aria-label="近距離命中加成減 1">−</button>
@@ -208,6 +240,15 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
           </div>
           <p class="field-hint">其他沒列到的近距離命中</p>
         </div>
+        <div class="field" data-show="ranged" hidden>
+          <label for="f-rhadj">遠距離命中加成</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-rhadj" aria-label="遠距離命中加成減 1">−</button>
+            <input id="f-rhadj" type="number" inputmode="numeric" min="-30" max="30" step="1">
+            <button type="button" data-step="1" data-for="f-rhadj" aria-label="遠距離命中加成加 1">+</button>
+          </div>
+          <p class="field-hint">其他沒列到的遠距離命中</p>
+        </div>
       </div>
       <div class="chips" id="derived"></div>
     </div>
@@ -215,7 +256,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 
   <section aria-labelledby="t-buff">
     <div class="sec-head"><h2 class="sec-title" id="t-buff">狀態</h2></div>
-    <div class="panel"><div class="toggles" id="buffs"></div></div>
+    <div class="panel"><div class="toggles" id="buffs" data-show="melee"></div><div class="toggles" id="rbuffs" data-show="ranged" hidden></div></div>
   </section>
 
   <section aria-labelledby="t-weap">
@@ -226,7 +267,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
         <button type="button" role="radio" data-size="small">小怪</button>
         <button type="button" role="radio" data-size="large">大怪</button>
       </div>
-      <label class="inline-toggle" id="undead-wrap">不死系<span class="switch"><input type="checkbox" id="t-undead"><span class="track" aria-hidden="true"></span></span></label>
+      <label class="inline-toggle" id="undead-wrap">不死系<span class="undead-note" id="undead-note" hidden>這種箭沒有加成</span><span class="switch"><input type="checkbox" id="t-undead"><span class="track" aria-hidden="true"></span></span></label>
     </div>
     <div class="panel" id="pvp-panel">
       <div class="fields">
@@ -236,6 +277,14 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             <button type="button" data-step="-1" data-for="f-tac" aria-label="對象 AC減 1">−</button>
             <input id="f-tac" type="number" inputmode="numeric" min="-120" max="10" step="1">
             <button type="button" data-step="1" data-for="f-tac" aria-label="對象 AC加 1">+</button>
+          </div>
+        </div>
+        <div class="field" data-show="ranged" hidden>
+          <label for="f-ter">對象 ER</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-ter" aria-label="對象 ER減 1">−</button>
+            <input id="f-ter" type="number" inputmode="numeric" min="0" max="100" step="1">
+            <button type="button" data-step="1" data-for="f-ter" aria-label="對象 ER加 1">+</button>
           </div>
         </div>
         <div class="field">
@@ -382,17 +431,102 @@ function calc(state){
     return {w,e,eb,sb,sh,flat,speed,ud,ok:canUse(w,state.cls),hit,hitRate,min:st.min,max:st.max,avg:st.avg,perMin:st.avg*speed*hitRate,perSec:st.avg*speed*hitRate/60};
   });
 }
+// ---- 遠距離（弓）: from the 07_遠距離Beta page (Beta 2, 11/2) ----
+// 弓 and 箭: official 遊戲百科, category 弓 (checked 2026-11-02). dmg = 遠距離傷害, hit = 遠距離命中; only = 百科 classNames when restricted
+const BOWS=[
+  {n:"沙哈之弓",s:4,l:4,dmg:5,hit:2,note:"沒裝箭時用無形箭",only:["妖精"]},
+  {n:"熾炎天使弓",s:3,l:3,dmg:4,hit:3,proc:"月光地裂術",only:["妖精"]},
+  {n:"赤焰之弓",s:3,l:3,dmg:4,hit:2,proc:"火箭",only:["妖精"]},
+  {n:"南瓜長弓",s:3,l:3,dmg:3,hit:1,proc:"南瓜封鎖",event:true,only:["王族","妖精","魔法師"]},
+  {n:"尤米弓",s:3,l:3,dmg:3,only:["妖精"]},
+  {n:"十字弓",s:3,l:2,dmg:2,hit:3,only:["騎士","妖精"]},
+  {n:"古老的弩槍",s:3,l:3,dmg:2,hit:5,oneHand:true,only:["妖精"]},
+  {n:"獵人之弓",s:2,l:2,dmg:1,hit:5},
+  {n:"精靈弓",s:2,l:2,dmg:1},
+  {n:"弓",s:2,l:2},
+  {n:"歐西斯弓",s:2,l:2,dmg:-1},
+  {n:"短弓",s:2,l:2,dmg:-1},
+  {n:"被遺忘的弩槍",s:1,l:1,noEnchant:true,only:["妖精"]}
+];
+const ARROWS=[
+  {id:"arrow",n:"箭",s:6,l:5},
+  {id:"silver",n:"銀箭",s:7,l:6,u:1},
+  {id:"mithril",n:"米索莉箭",s:10,l:9,u:1}
+];
+// Bow speed (推算, user's pick 11/2): 黑暗巡守, the Lv55 bow polymorph (黑暗騎士 can't hold a bow). lcinfo.io/polymobs estimates
+// its base bow speed at 1.224/s (its Lv45+ rows are estimates); a polymorph shoots at the same speed for every class (Bahamut 6443).
+// 自我加速藥水 x4/3; 勇敢藥水／惡魔之血 x4/3 as for melee; 精靈餅乾 x1.15 (Bahamut 6443; our elf 1H video gave x1.14); 法師 has no 2nd haste.
+const BOW_BASE=1.224*60;
+function bowSpeedOf(cls){
+  const r=v=>Math.round(v*10)/10;
+  if(cls==="elf")return {desc:"自我加速藥水＋精靈餅乾",bow:r(BOW_BASE*(4/3)*1.15)};
+  if(cls==="mage")return {desc:"自我加速藥水",bow:r(BOW_BASE*(4/3))};
+  return {desc:cls==="royal"?"自我加速藥水＋惡魔之血":"自我加速藥水＋勇敢藥水",bow:r(BOW_BASE*(16/9))};
+}
+// 狀態 for bows. 祝福／擬似／神聖: the official text gives their damage as 追加傷害 (only the hit says 近距離), and L1J puts that
+// damage on the weapon, bows included. So bows get the damage but not the hit (推算, user 11/2; 待測清單 #5). Same switches as 近距離's.
+const RBUFFS=[
+  {id:"windshot",n:"風之神射",v:0,hit:5,src:"妖精風屬性魔法",group:"wind"},
+  {id:"stormeye",n:"暴風之眼",v:2,hit:2,src:"妖精風屬性魔法，隊伍",group:"wind"},
+  {id:"stormshot",n:"暴風神射",v:4,hit:2,src:"妖精風屬性魔法，自己施放",group:"wind"},
+  {id:"bless",n:"祝福魔法武器",v:2,dl:"追加傷害",src:"妖精、魔法師魔法",group:"wpn"},
+  {id:"pseudo",n:"擬似魔法武器",v:2,dl:"追加傷害",src:"王族、妖精、魔法師魔法",group:"wpn"},
+  {id:"holy",n:"神聖武器",v:1,dl:"追加傷害",src:"全職業魔法",group:"wpn"},
+  {id:"battle",n:"戰鬥強化卷軸",v:2,hit:2,src:"經典商城"}
+];
+const RDOLLS=[  // official 指南: the dolls that add 遠距離傷害 or 遠距離命中
+  {id:"none",n:"不使用",v:0},
+  {id:"wolf",n:"野狼寶寶",v:1},
+  {id:"kesh",n:"奎斯坦修",v:0,hit:1},
+  {id:"alien",n:"亞力安",v:1,hit:1},
+  {id:"drake",n:"飛龍",v:2,hit:2}
+];
+// PvP ranged hit (推算, user's pick 11/2), from lcinfo.io's code: hit = (DEX - 12) + level + bow hit + enchant + buff/doll hit,
+// 4 less than melee's STR - 8 (its source experiment is unknown); the melee AC formula kept to 5..95%,
+// then x (1 - target ER%), since lcinfo's own text and L1J both roll ER only after a hit has passed AC.
+function rangedHitValue(level,dex){return Math.max(0,Math.min(127,dex))-12+level;}
+function rangedRate(h,ac,er){return hitRateOf(h,ac)*(1-Math.min(100,Math.max(0,er))/100);}
+// DEX -> 遠距離傷害: measured for 13–25 (Inven 6485/217) and 26–30 (6485/717); 31+ follows lcinfo's table, +2 per 5 DEX
+function dexBonus(dex){const q=Math.trunc(dex)-13;return q<0?0:2*Math.floor(q/5)+(q%5<3?1:2);}
+function rangedLevelBonus(level,isElf){return isElf?Math.floor(level/10):0;}  // only 妖精: +1 遠距離傷害 per 10 levels (도건: Lv50 = +5; lcinfo)
+function bowByName(n){return BOWS.find(w=>w.n===n)||BOWS[0];}
+function arrowById(id){return ARROWS.find(a=>a.id===id)||ARROWS[0];}
+function rdollById(id){return RDOLLS.find(d=>d.id===id)||RDOLLS[0];}
+function rangedBaseHit(state){
+  const buffHit=RBUFFS.reduce((s,b)=>s+(state.buffs&&state.buffs[b.id]&&b.hit?b.hit:0),0);
+  return rangedHitValue(state.level,state.dex)+buffHit+(rdollById(state.rdoll).hit||0)+(state.rhadj||0);
+}
+function calcRanged(state){
+  const p=bowSpeedOf(state.cls),a=arrowById(state.arrow),doll=rdollById(state.rdoll),pvp=state.size==="pvp";
+  const buff=RBUFFS.reduce((s,b)=>s+(state.buffs&&state.buffs[b.id]?b.v:0),0);
+  const lv=rangedLevelBonus(state.level,state.cls==="elf"),baseHit=rangedBaseHit(state);
+  return state.bows.map(x=>{
+    const w=bowByName(x.n);
+    const e=w.noEnchant?0:x.e;
+    const eb=e>=11?5:e>=10?2:0;  // same +10/+11 extra damage as melee
+    const flat=e+eb+(w.dmg||0)+dexBonus(state.dex)+lv+doll.v+buff+(state.rother||0);
+    // One roll of 1..(bow die + arrow die): the arrow raises only the max (도건, Inven 6485/717; 6485/217 十字弓＋銀箭 3–12)
+    const die=state.size==="large"?w.l+a.l:w.s+a.s;
+    const ud=!!(state.undead&&a.u&&!pvp);  // silver/mithril arrows vs undead: +1..20 (lcinfo looks at the arrow only)
+    const st=dmgStats(die,flat,ud,pvp?state.tdr||0:0);
+    const hit=(w.hit||0)+e,hitRate=pvp?rangedRate(baseHit+hit,state.tac,state.ter):HIT_MAX;  // each enchant level is +1 hit, as for melee
+    return {w,a,e,eb,flat,die,speed:p.bow,ud,ok:canUse(w,state.cls),hit,hitRate,min:st.min,max:st.max,avg:st.avg,perMin:st.avg*p.bow*hitRate,perSec:st.avg*p.bow*hitRate/60};
+  });
+}
 </script>
 <script>
 /* ---- UI ---- */
 const KEY="lc-dmg-calc-v2";
-const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"pvp",undead:false,tac:-40,tdr:0,hadj:0,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
+const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"pvp",undead:false,tac:-40,tdr:0,hadj:0,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}],
+  mode:"melee",dex:30,arrow:"arrow",rdoll:"wolf",rother:0,rhadj:0,ter:0,bows:[{n:"十字弓",e:7},{n:"赤焰之弓",e:7},{n:"熾炎天使弓",e:7},{n:"沙哈之弓",e:7}]};  // 遠距離 keeps its own cards, stat, arrow, doll and bonuses
 const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const $=id=>document.getElementById(id);
 const fmtInt=n=>Math.round(n).toLocaleString("zh-TW");
 const fmtHalf=n=>Number.isInteger(n)?String(n):n.toFixed(1);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const NUM_KEYS=["level","str","dex","other","rother","tac","ter","tdr","hadj","rhadj"],NUM_IDS=NUM_KEYS.map(k=>"f-"+k);
+const LEDE={melee:$("lede").textContent,ranged:"選職業、弓和箭，填強化、敏捷和狀態，就能比較每箭傷害和每秒傷害（DPS）。打人會照對方的 AC 和 ER 算命中率。"};
 let state=load();
 function load(){
   try{
@@ -411,6 +545,14 @@ function load(){
       delete d.buffs.pride;  // 傲慢的遺產 switch, removed in v40
       const seen={};
       BUFFS.forEach(b=>{if(b.group&&d.buffs[b.id]){if(seen[b.group])d.buffs[b.id]=false;seen[b.group]=true;}});
+      const rseen={};  // 遠距離 pick-ones (its weapon spells are the same switches, already one at most)
+      RBUFFS.forEach(b=>{if(b.group&&d.buffs[b.id]){if(rseen[b.group])d.buffs[b.id]=false;rseen[b.group]=true;}});
+      if(!["melee","ranged"].includes(d.mode))d.mode="melee";
+      d.bows=(Array.isArray(d.bows)&&d.bows.length?d.bows:clone(DEFAULT.bows)).slice(0,6).map(x=>({n:bowByName(x.n).n,e:clamp(parseInt(x.e,10)||0,0,12)}));
+      if(!ARROWS.some(x=>x.id===d.arrow))d.arrow="arrow";
+      if(!RDOLLS.some(x=>x.id===d.rdoll))d.rdoll="none";
+      d.dex=clamp(Math.round(+d.dex)||0,1,60);d.ter=clamp(Math.round(+d.ter)||0,0,100);
+      d.rother=clamp(Math.round(+d.rother)||0,-20,50);d.rhadj=clamp(Math.round(+d.rhadj)||0,-30,30);
       return d;
     }
   }catch(e){}
@@ -424,28 +566,36 @@ function optionsHTML(sel){
       .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}${w.alias?"（"+w.alias+"）":""}　${w.s}／${w.l}${w.unreleased?"（未開放）":""}${w.event?"（活動）":""}${canUse(w,state.cls)?"":`（${CLS[state.cls]}不能用）`}</option>`).join("")+
     `</optgroup>`).join("");
 }
+function bowOptionsHTML(sel){
+  return BOWS.slice().sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n,"zh-Hant"))
+    .map(w=>`<option value="${esc(w.n)}"${w.n===sel?" selected":""}>${esc(w.n)}　${w.s}／${w.l}${w.event?"（活動）":""}${canUse(w,state.cls)?"":`（${CLS[state.cls]}不能用）`}</option>`).join("");
+}
 function cardHTML(x,i){
-  const w=weaponByName(x.n);
+  const bow=state.mode==="ranged",a=arrowById(state.arrow);  // 遠距離: a bow card, and its dice add the arrow's
+  const w=bow?bowByName(x.n):weaponByName(x.n);
   const big=state.size==="large";
   const info=[];
-  if(w.dmg)info.push(`近距離傷害 +${w.dmg}`);
+  if(w.dmg)info.push(bow?`遠距離傷害 ${w.dmg>0?"+":""}${w.dmg}`:`近距離傷害 +${w.dmg}`);
   if(w.str)info.push(`力量 +${w.str}`);
+  if(w.oneHand)info.push("單手");
   if(w.proc)info.push(`發動：${w.proc}`,"不計魔法發動傷害");
   if(w.extra)info.push(w.extra);
+  if(w.note)info.push(w.note);
   if(w.noEnchant)info.push("不能強化");
   const dis=w.noEnchant?" disabled":"";
-  const dice=big?`小怪 ${w.s}・<b>大怪 ${w.l}</b>`:`<b>小怪 ${w.s}</b>・大怪 ${w.l}`;
+  const ds=bow?`${w.s}＋${a.s}`:w.s,dl=bow?`${w.l}＋${a.l}`:w.l,unit=bow?"箭":"刀",noun=bow?"弓":"武器";
+  const dice=big?`小怪 ${ds}・<b>大怪 ${dl}</b>`:`<b>小怪 ${ds}</b>・大怪 ${dl}`;
   const chips=(w.unreleased?`<span class="chip chip-warn">未開放</span>`:"")+(w.event?`<span class="chip">活動</span>`:"")+
     (canUse(w,state.cls)?"":`<span class="chip chip-warn">${CLS[state.cls]}不能用</span>`)+
-    `<span class="chip">${w.t}</span><span class="chip">${dice}</span>`+
+    (bow?"":`<span class="chip">${w.t}</span>`)+`<span class="chip">${dice}</span>`+
     info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")+
     (w.u?`<span class="chip${state.undead&&state.size!=="pvp"?" chip-on":""}">對不死 +1～20</span>`:"")+
     `<span class="chip" id="w${i}-hit" hidden></span>`+
     `<span class="chip chip-on" id="w${i}-hr"></span>`;
   return `<article class="wcard" id="card-${i}">
     <div class="wtop">
-      <div class="selwrap"><select id="w${i}-n" data-w="${i}" aria-label="第 ${i+1} 把武器">${optionsHTML(w.n)}</select></div>
-      ${state.weapons.length>1?`<button type="button" class="rm" data-rm="${i}" aria-label="移除第 ${i+1} 把武器">×</button>`:""}
+      <div class="selwrap"><select id="w${i}-n" data-w="${i}" aria-label="第 ${i+1} 把${noun}">${bow?bowOptionsHTML(w.n):optionsHTML(w.n)}</select></div>
+      ${weaponList().length>1?`<button type="button" class="rm" data-rm="${i}" aria-label="移除第 ${i+1} 把${noun}">×</button>`:""}
     </div>
     <div class="enc-row">
       <label for="w${i}-e">強化<span class="enc-note" id="w${i}-eb"></span></label>
@@ -457,9 +607,9 @@ function cardHTML(x,i){
     </div>
     <div class="chips">${chips}</div>
     <div class="mini">
-      <div><div class="k">每刀最小</div><div class="v" id="r${i}-min"></div></div>
-      <div><div class="k">每刀平均</div><div class="v" id="r${i}-avg"></div></div>
-      <div><div class="k">每刀最大</div><div class="v" id="r${i}-max"></div></div>
+      <div><div class="k">每${unit}最小</div><div class="v" id="r${i}-min"></div></div>
+      <div><div class="k">每${unit}平均</div><div class="v" id="r${i}-avg"></div></div>
+      <div><div class="k">每${unit}最大</div><div class="v" id="r${i}-max"></div></div>
     </div>
     <div class="big">
       <div class="big-head"><span class="k">每秒傷害 DPS</span><span class="badge" id="r${i}-best" hidden>最高</span></div>
@@ -468,27 +618,45 @@ function cardHTML(x,i){
     </div>
   </article>`;
 }
+function weaponList(){return state.mode==="ranged"?state.bows:state.weapons;}  // each side keeps its own cards
 function renderWeapons(){
-  $("weapons").innerHTML=state.weapons.map(cardHTML).join("")+
-    (state.weapons.length<6?`<button type="button" class="add" id="add">+ 新增武器</button>`:"");
+  const list=weaponList();
+  $("weapons").innerHTML=list.map(cardHTML).join("")+
+    (list.length<6?`<button type="button" class="add" id="add">+ 新增${state.mode==="ranged"?"弓":"武器"}</button>`:"");
   update();
 }
+function rangedDerivedHTML(pvp){
+  const lv=rangedLevelBonus(state.level,state.cls==="elf"),buffSum=RBUFFS.reduce((s,b)=>s+(state.buffs[b.id]?b.v:0),0);
+  return `<span class="chip">敏捷加成 <b>+${dexBonus(state.dex)}</b></span>`+
+    `<span class="chip">${state.cls==="elf"?`等級加成 <b>+${lv}</b> <span class="tag">妖精每 10 級 +1</span>`:`等級加成 <b>+0</b> <span class="tag">只有妖精有</span>`}</span>`+
+    `<span class="chip">魔法娃娃 <b>+${rdollById(state.rdoll).v}</b></span>`+
+    `<span class="chip">其他傷害加成 <b>${state.rother<0?"":"+"}${state.rother}</b></span>`+
+    `<span class="chip">狀態 <b>+${buffSum}</b></span>`+
+    (pvp?`<span class="chip">命中（不含弓）<b>${Math.round(rangedBaseHit(state))}</b></span>`:"");
+}
 function update(){
-  const p=speedsOf(state);
+  const bow=state.mode==="ranged";
+  const p=bow?bowSpeedOf(state.cls):speedsOf(state);
+  document.querySelectorAll("#mode-seg [data-mode]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.mode===state.mode)));
+  document.querySelectorAll("[data-show]").forEach(el=>{el.hidden=el.dataset.show!==state.mode;});
   document.querySelectorAll("#size-seg [data-size]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.size===state.size)));
   document.querySelectorAll("#cls-seg [data-cls]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.cls===state.cls)));
   $("t-undead").checked=state.undead;
   const pvp=state.size==="pvp";
   $("pvp-panel").hidden=!pvp;$("undead-wrap").hidden=pvp;
+  $("undead-note").hidden=!(bow&&state.undead&&!arrowById(state.arrow).u);
   $("hit-note").textContent=pvp?"DPS 和每分鐘傷害以推算的命中率計算":"DPS 和每分鐘傷害以命中率上限 95% 計算";
-  $("preset-hint").innerHTML=`${p.desc}：${p.mage?"單手劍、魔杖":"單手劍"}每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀`+
+  $("lede").textContent=LEDE[state.mode];
+  $("basis-name").textContent=bow?"黑暗巡守":"黑暗騎士";
+  $("preset-hint").innerHTML=bow?`${p.desc}：弓每分鐘&nbsp;<b>${p.bow}</b>&nbsp;箭 <span class="tag guess">推算</span>`:
+    `${p.desc}：${p.mage?"單手劍、魔杖":"單手劍"}每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀`+
     (p.est?"":`、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀`)+` <span class="tag ${p.est?"guess":"meas"}">${p.est?"推算":"實測"}</span>`;
-  ["level","str","other","tac","tdr","hadj"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
+  NUM_KEYS.forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
   const sb=strBonus(state.str),lv=levelBonus(state.level,state.cls==="knight");
   const dollV=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
   const buffSum=BUFFS.reduce((s,b)=>s+(state.buffs[b.id]?b.v:0),0);
-  $("f-doll").value=state.doll;
-  $("derived").innerHTML=
+  $("f-doll").value=state.doll;$("f-rdoll").value=state.rdoll;$("f-arrow").value=state.arrow;
+  $("derived").innerHTML=bow?rangedDerivedHTML(pvp):
     `<span class="chip">力量加成 <b>+${sb}</b></span>`+
     `<span class="chip">${state.cls==="knight"?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:`等級加成 <b>+0</b> <span class="tag">只有騎士有</span>`}</span>`+
     `<span class="chip">魔法娃娃 <b>+${dollV}</b></span>`+
@@ -497,7 +665,9 @@ function update(){
     (pvp?`<span class="chip">命中（不含武器）<b>${Math.round(baseHitOf(state,p))}</b></span>`:"");
   BUFFS.forEach(b=>{if(!b.group)$("b-"+b.id).checked=!!state.buffs[b.id];});
   GROUPS.forEach(g=>{const on=BUFFS.find(b=>b.group===g.id&&state.buffs[b.id]);$(g.sel).value=on?on.id:"none";$(g.val).innerHTML=on?buffLine(on):g.none;});
-  const rows=calc(state);
+  RBUFFS.forEach(b=>{if(!b.group)$("rb-"+b.id).checked=!!state.buffs[b.id];});
+  RGROUPS.forEach(g=>{const on=RBUFFS.find(b=>b.group===g.id&&state.buffs[b.id]);$(g.sel).value=on?on.id:"none";$(g.val).innerHTML=on?rBuffLine(on):g.none;});
+  const rows=bow?calcRanged(state):calc(state),unit=bow?"箭":"刀";
   let best=-1;  // only weapons this class can equip compete for 最高
   rows.forEach((r,i)=>{if(r.ok&&(best<0||r.perMin>rows[best].perMin+1e-9))best=i;});
   rows.forEach((r,i)=>{
@@ -506,10 +676,10 @@ function update(){
     $(`r${i}-avg`).textContent=fmtHalf(r.avg);
     $(`r${i}-max`).textContent=fmtInt(r.max);
     $(`r${i}-ps`).textContent=r.perSec.toFixed(1);
-    $(`r${i}-pm`).textContent=`每分鐘傷害 ${fmtInt(r.perMin)}・每分鐘 ${r.speed} 刀`;
+    $(`r${i}-pm`).textContent=`每分鐘傷害 ${fmtInt(r.perMin)}・每分鐘 ${r.speed} ${unit}`;
     const base=r.w.hit||0,hc=$(`w${i}-hit`);
     hc.hidden=!r.hit;
-    const sg=v=>(v>0?"+":"")+v,parts=[base?`武器 ${sg(base)}`:"",r.sh?`力量 ${sg(r.sh)}`:"",r.e?`強化 +${r.e}`:""].filter(Boolean);
+    const sg=v=>(v>0?"+":"")+v,parts=[base?`${bow?"弓":"武器"} ${sg(base)}`:"",r.sh?`力量 ${sg(r.sh)}`:"",r.e?`強化 +${r.e}`:""].filter(Boolean);
     hc.innerHTML=r.hit?`命中 <b>${sg(r.hit)}</b>`+(r.e||r.sh?`（${parts.join("、")}）`:""):"";
     $(`w${i}-hr`).hidden=!pvp;
     $(`w${i}-hr`).innerHTML=`預估命中率 <b>${Math.round(r.hitRate*100)}%</b>`;
@@ -527,15 +697,27 @@ $("buffs").innerHTML=
   GROUPS.map(g=>`<div class="row"><span class="row-l"><label class="row-n" for="${g.sel}">${g.n}</label><span class="row-v" id="${g.val}"></span></span><div class="selwrap row-sel"><select id="${g.sel}" data-group="${g.id}"><option value="none">不使用</option>${BUFFS.filter(b=>b.group===g.id).map(b=>`<option value="${b.id}">${b.n} +${b.v}</option>`).join("")}</select></div></div>`).join("")+
   BUFFS.filter(b=>!b.group).map(b=>`<label class="row"><span class="row-l"><span class="row-n">${b.n}</span><span class="row-v">${buffLine(b)}</span></span><span class="switch"><input type="checkbox" id="b-${b.id}" data-buff="${b.id}"><span class="track" aria-hidden="true"></span></span></label>`).join("");
 $("f-doll").innerHTML=DOLLS.map(d=>`<option value="${d.id}">${d.n}${d.v?` +${d.v}`:""}</option>`).join("");
+// 遠距離 狀態: 風系魔法 and 武器魔法 pick-ones, then the switches (rb- ids; the shared spells keep one on/off for both sides)
+const RGROUPS=[{id:"wind",sel:"f-wind",val:"wind-v",n:"風系魔法",none:"風之神射、暴風之眼、暴風神射三選一"},
+               {id:"wpn",sel:"f-rwmagic",val:"rwmagic-v",n:"武器魔法",none:"祝福、擬似、神聖三選一",est:true}];
+const rBuffLine=b=>[b.v?`${b.dl||"遠距離傷害"}&nbsp;+${b.v}`:"",b.hit?`遠距離命中&nbsp;+${b.hit}`:"",b.src].filter(Boolean).join("・");
+$("rbuffs").innerHTML=
+  RGROUPS.map(g=>`<div class="row"><span class="row-l"><label class="row-n" for="${g.sel}">${g.n}${g.est?` <span class="tag guess">推算</span>`:""}</label><span class="row-v" id="${g.val}"></span></span><div class="selwrap row-sel"><select id="${g.sel}" data-group="${g.id}"><option value="none">不使用</option>${RBUFFS.filter(b=>b.group===g.id).map(b=>`<option value="${b.id}">${b.n}${b.v?` +${b.v}`:`（命中 +${b.hit}）`}</option>`).join("")}</select></div></div>`).join("")+
+  RBUFFS.filter(b=>!b.group).map(b=>`<label class="row"><span class="row-l"><span class="row-n">${b.n}</span><span class="row-v">${rBuffLine(b)}</span></span><span class="switch"><input type="checkbox" id="rb-${b.id}" data-buff="${b.id}"><span class="track" aria-hidden="true"></span></span></label>`).join("");
+$("f-arrow").innerHTML=ARROWS.map(a=>`<option value="${a.id}">${a.n}　${a.s}／${a.l}${a.u?"・對不死 +1～20":""}</option>`).join("");
+const dollLabel=d=>d.n+(d.v||d.hit?" "+[d.v?`+${d.v}`:"",d.hit?`命中 +${d.hit}`:""].filter(Boolean).join("、"):"");
+$("f-rdoll").innerHTML=RDOLLS.map(d=>`<option value="${d.id}">${dollLabel(d)}</option>`).join("");
 
 document.addEventListener("click",e=>{
+  const md=e.target.closest("#mode-seg [data-mode]");
+  if(md){state.mode=md.dataset.mode;renderWeapons();return;}
   const cs=e.target.closest("#cls-seg [data-cls]");
   if(cs){state.cls=cs.dataset.cls;renderWeapons();return;}
   const sz=e.target.closest("#size-seg [data-size]");
   if(sz){state.size=sz.dataset.size;renderWeapons();return;}
   const rm=e.target.closest("[data-rm]");
-  if(rm){state.weapons.splice(+rm.dataset.rm,1);renderWeapons();return;}
-  if(e.target.closest("#add")){const last=state.weapons[state.weapons.length-1];state.weapons.push({n:last.n,e:last.e});renderWeapons();return;}
+  if(rm){weaponList().splice(+rm.dataset.rm,1);renderWeapons();return;}
+  if(e.target.closest("#add")){const ws=weaponList(),last=ws[ws.length-1];ws.push({n:last.n,e:last.e});renderWeapons();return;}
   const st=e.target.closest("[data-step]");
   if(st){
     const inp=$(st.dataset.for);
@@ -547,22 +729,24 @@ document.addEventListener("click",e=>{
 document.addEventListener("input",e=>{
   const t=e.target,v=parseInt(t.value,10);
   if(Number.isNaN(v))return;
-  if(["f-level","f-str","f-other","f-tac","f-tdr","f-hadj"].includes(t.id)){state[t.id.slice(2)]=clamp(v,Number(t.min),Number(t.max));update();}
-  else if(t.classList.contains("enc")){state.weapons[+t.dataset.w].e=clamp(v,0,12);update();}
+  if(NUM_IDS.includes(t.id)){state[t.id.slice(2)]=clamp(v,Number(t.min),Number(t.max));update();}
+  else if(t.classList.contains("enc")){weaponList()[+t.dataset.w].e=clamp(v,0,12);update();}
 });
 document.addEventListener("change",e=>{
   const t=e.target;
   if(t.matches("select[data-w]")){
-    const i=+t.dataset.w;
-    state.weapons[i].n=t.value;
-    if(weaponByName(t.value).noEnchant)state.weapons[i].e=0;
+    const i=+t.dataset.w,ws=weaponList();
+    ws[i].n=t.value;
+    if((state.mode==="ranged"?bowByName:weaponByName)(t.value).noEnchant)ws[i].e=0;
     renderWeapons();
   }else if(t.id==="f-doll"){state.doll=t.value;update();}
+  else if(t.id==="f-rdoll"){state.rdoll=t.value;update();}
+  else if(t.id==="f-arrow"){state.arrow=t.value;renderWeapons();}
   else if(t.id==="t-undead"){state.undead=t.checked;renderWeapons();}
-  else if(t.matches("select[data-group]")){BUFFS.forEach(b=>{if(b.group===t.dataset.group)state.buffs[b.id]=b.id===t.value;});update();}
+  else if(t.matches("select[data-group]")){(t.closest("#rbuffs")?RBUFFS:BUFFS).forEach(b=>{if(b.group===t.dataset.group)state.buffs[b.id]=b.id===t.value;});update();}
   else if(t.matches("input[data-buff]")){state.buffs[t.dataset.buff]=t.checked;update();}
-  else if(["f-level","f-str","f-other","f-tac","f-tdr","f-hadj"].includes(t.id)){t.value=state[t.id.slice(2)];}
-  else if(t.classList.contains("enc")){t.value=state.weapons[+t.dataset.w].e;}
+  else if(NUM_IDS.includes(t.id)){t.value=state[t.id.slice(2)];}
+  else if(t.classList.contains("enc")){t.value=weaponList()[+t.dataset.w].e;}
 });
 renderWeapons();
 </script>
