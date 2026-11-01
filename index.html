@@ -54,6 +54,9 @@ section{display:flex;flex-direction:column;gap:10px;min-width:0}
 .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-inline:4px}
 .sec-title{font-size:13px;font-weight:600;color:var(--fg2);letter-spacing:.04em;margin:0;display:flex;align-items:center;gap:8px}
 .sec-note{font-size:13px;color:var(--fg3)}
+.beta-note{margin:0 2px;font-size:12px;line-height:1.6;color:var(--fg3);word-break:keep-all;overflow-wrap:anywhere;text-wrap:pretty}
+#size-seg.has-pvp{grid-template-columns:repeat(3,minmax(0,1fr))}
+[hidden]{display:none!important}
 .panel{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
 .label{display:block;font-size:13px;color:var(--fg2);margin-bottom:6px}
 .hint{margin:8px 2px 0;font-size:13px;line-height:1.6;color:var(--fg2)}
@@ -205,13 +208,46 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   </section>
 
   <section aria-labelledby="t-weap">
-    <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note">DPS 和每分鐘傷害以命中率上限 95% 計算</span></div>
+    <div class="sec-head"><h2 class="sec-title" id="t-weap">武器比較</h2><span class="sec-note" id="hit-note">DPS 和每分鐘傷害以命中率上限 95% 計算</span></div>
     <div class="panel target-bar">
-      <div class="seg" role="radiogroup" aria-label="目標大小" id="size-seg">
+      <div class="seg" role="radiogroup" aria-label="目標" id="size-seg">
+        <button type="button" role="radio" data-size="pvp" hidden>打人</button>
         <button type="button" role="radio" data-size="small">小怪・打人</button>
         <button type="button" role="radio" data-size="large">大怪</button>
       </div>
-      <label class="inline-toggle">不死系<span class="switch"><input type="checkbox" id="t-undead"><span class="track" aria-hidden="true"></span></span></label>
+      <label class="inline-toggle" id="undead-wrap">不死系<span class="switch"><input type="checkbox" id="t-undead"><span class="track" aria-hidden="true"></span></span></label>
+      <label class="inline-toggle" id="beta-wrap">Beta 命中率<span class="switch"><input type="checkbox" id="t-beta"><span class="track" aria-hidden="true"></span></span></label>
+    </div>
+    <div class="panel" id="pvp-panel">
+      <div class="fields">
+        <div class="field">
+          <label for="f-tac">對象 AC</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-tac" aria-label="對象 AC減 1">−</button>
+            <input id="f-tac" type="number" inputmode="numeric" min="-120" max="10" step="1">
+            <button type="button" data-step="1" data-for="f-tac" aria-label="對象 AC加 1">+</button>
+          </div>
+          <p class="field-hint">對方的防禦，越負越難打中</p>
+        </div>
+        <div class="field">
+          <label for="f-tdr">對象傷害減免</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-tdr" aria-label="對象傷害減免減 1">−</button>
+            <input id="f-tdr" type="number" inputmode="numeric" min="0" max="30" step="1">
+            <button type="button" data-step="1" data-for="f-tdr" aria-label="對象傷害減免加 1">+</button>
+          </div>
+          <p class="field-hint">每刀扣掉的固定傷害，最低 0<span class="nowrap">（例如增幅防禦）</span></p>
+        </div>
+        <div class="field">
+          <label for="f-hadj">命中修正</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" data-for="f-hadj" aria-label="命中修正減 1">−</button>
+            <input id="f-hadj" type="number" inputmode="numeric" min="-30" max="30" step="1">
+            <button type="button" data-step="1" data-for="f-hadj" aria-label="命中修正加 1">+</button>
+          </div>
+          <p class="field-hint">實測命中率對不上時用來校正</p>
+        </div>
+      </div>
     </div>
     <div class="weapons" id="weapons"></div>
   </section>
@@ -275,22 +311,35 @@ const BUFFS=[
   {id:"soul",n:"烈焰之魂",v:0,maxRoll:true,src:"每刀都打武器的最大傷害・妖精火屬性魔法，自己施放，128 秒"},
   {id:"firew",n:"火焰武器",v:3,src:"妖精火屬性魔法，自己施放",group:"fire"},
   {id:"dance",n:"舞躍之火",v:3,src:"妖精火屬性魔法，隊伍",group:"fire"},
-  {id:"blaze",n:"烈炎武器",v:5,src:"妖精火屬性魔法，自己施放，命中 +3",group:"fire"},
-  {id:"bless",n:"祝福魔法武器",v:2,src:"妖精、魔法師魔法，命中 +2",group:"wpn"},
+  {id:"blaze",n:"烈炎武器",v:5,hit:3,src:"妖精火屬性魔法，自己施放，命中 +3",group:"fire"},
+  {id:"bless",n:"祝福魔法武器",v:2,hit:2,src:"妖精、魔法師魔法，命中 +2",group:"wpn"},
   {id:"pseudo",n:"擬似魔法武器",v:2,src:"王族、妖精、魔法師魔法",group:"wpn"},
-  {id:"holy",n:"神聖武器",v:1,src:"全職業魔法，命中 +1，打不死系另有加成",group:"wpn"},
-  {id:"brave",n:"勇敢靈氣",v:3,src:"王族魔法，命中 +3"},
-  {id:"burn",n:"灼熱靈氣",v:1,src:"王族魔法，命中 +1"},
-  {id:"battle",n:"戰鬥強化卷軸",v:2,src:"經典商城，命中 +2"}
+  {id:"holy",n:"神聖武器",v:1,hit:1,src:"全職業魔法，命中 +1，打不死系另有加成",group:"wpn"},
+  {id:"brave",n:"勇敢靈氣",v:3,hit:3,src:"王族魔法，命中 +3"},
+  {id:"burn",n:"灼熱靈氣",v:1,hit:1,src:"王族魔法，命中 +1"},
+  {id:"battle",n:"戰鬥強化卷軸",v:2,hit:2,src:"經典商城，命中 +2"}
 ];
 const DOLLS=[
   {id:"none",n:"不使用",v:0},
   {id:"wolf",n:"野狼寶寶",v:1},
-  {id:"snowman",n:"雪人",v:1},
-  {id:"ogre",n:"食人妖精王",v:2}
+  {id:"snowman",n:"雪人",v:1,hit:1},
+  {id:"ogre",n:"食人妖精王",v:2,hit:2}
 ];
-// DPS and per-minute damage use the 95% hit-rate cap (user's rule; old-Lineage lore, not in official docs)
-const HIT_RATE=0.95;
+// Beta hit model (推測, 11/1): 즐겜러파문's Classic PvP formula (YouTube AgkbQEHfMZg, 2026-04-28; lcinfo.io uses the same code).
+// It fits our 8 PvP clips and 도건's tests (13 points, chi2 18). hit = (STR - 8) + level + weapon hit + enchant + buff/doll hit
+// + correction, no class bonus. Each hit point is worth 1/max(8,|AC|); for AC <= -8 the rate is (hit + 6.5)/|AC| - 50%; 5..95%.
+const HIT_MIN=0.05, HIT_MAX=0.95;
+function hitValue(level,str){return Math.max(1,Math.min(59,str))-8+level;}
+function hitRateOf(h,ac){const a=-ac,w=Math.max(8,a);return Math.min(HIT_MAX,Math.max(HIT_MIN,(h-(a/2-6.5+Math.max(1,a)-w))/w));}
+function dmgStats(die,flat,ud,dr,maxRoll){  // exact per-hit spread after the target's flat reduction (floor 0: the game shows a fully absorbed hit as a miss)
+  let sum=0,n=0,mn=Infinity,mx=-Infinity;
+  for(let r=maxRoll?die:1;r<=die;r++)for(let u=ud?1:0;u<=(ud?20:0);u++){const d=Math.max(0,r+flat+u-dr);sum+=d;n++;if(d<mn)mn=d;if(d>mx)mx=d;}
+  return {avg:sum/n,min:mn,max:mx};
+}
+function baseHitOf(state,p){
+  const buffHit=BUFFS.reduce((s,b)=>s+(state.buffs&&state.buffs[b.id]&&b.hit?b.hit:0),0);
+  return hitValue(state.level,state.str)+buffHit+((DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).hit||0)+(state.hadj||0);
+}
 function strBonus(str){return str<15?0:Math.floor((str-13)/2);}
 function levelBonus(level,isKnight){return isKnight?Math.floor(level/10):0;}
 const CLS={knight:"騎士",royal:"王族",elf:"妖精"};
@@ -303,6 +352,7 @@ function calc(state){
   const doll=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
   const lv=levelBonus(state.level,state.cls==="knight");  // only knights get +1 per 10 levels
   const sb=strBonus(state.str);  // typed panel STR as is, for every weapon (user rule 10/25)
+  const baseHit=baseHitOf(state,p),pvp=state.size==="pvp";  // 小怪／大怪: no PvE hit data, so the 95% cap as on the main page
   return state.weapons.map(x=>{
     const w=weaponByName(x.n);
     const e=w.noEnchant?0:x.e;
@@ -310,17 +360,18 @@ function calc(state){
     const flat=e+eb+(w.dmg||0)+sb+lv+doll+buff+(state.other||0);
     const speed=w.t==="匕首"?p.dagger:w.t==="雙手劍"?p.twohand:p.sword;
     const die=state.size==="large"?w.l:w.s;
-    const ud=!!(state.undead&&w.u);  // silver/mithril/orichalcum vs undead: +1..20 per hit
-    const avg=(maxRoll?die:(die+1)/2)+flat+(ud?10.5:0);  // 烈焰之魂: the weapon always rolls its maximum
+    const ud=!!(state.undead&&w.u&&!pvp);  // silver/mithril/orichalcum vs undead: +1..20 per hit
+    const st=dmgStats(die,flat,ud,pvp?state.tdr||0:0,maxRoll);
     // Classic: each enchant level also adds +1 hit
-    return {w,e,eb,sb,flat,speed,ud,ok:canUse(w,state.cls),hit:(w.hit||0)+e,min:(maxRoll?die:1)+flat+(ud?1:0),max:die+flat+(ud?20:0),avg,perMin:avg*speed*HIT_RATE,perSec:avg*speed*HIT_RATE/60};
+    const hit=(w.hit||0)+e,hitRate=pvp?hitRateOf(baseHit+hit,state.tac):HIT_MAX;
+    return {w,e,eb,sb,flat,speed,ud,ok:canUse(w,state.cls),hit,hitRate,min:st.min,max:st.max,avg:st.avg,perMin:st.avg*speed*hitRate,perSec:st.avg*speed*hitRate/60};
   });
 }
 </script>
 <script>
 /* ---- UI ---- */
 const KEY="lc-dmg-calc-v2";
-const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"small",undead:false,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
+const DEFAULT={preset:"dk",cls:"knight",level:55,str:31,doll:"wolf",other:0,size:"small",beta:false,undead:false,tac:-40,tdr:0,hadj:0,buffs:{},weapons:[{n:"細劍",e:9},{n:"水晶短劍",e:7},{n:"瑟魯基之劍",e:7},{n:"古老的劍",e:0}]};
 const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const $=id=>document.getElementById(id);
@@ -336,9 +387,12 @@ function load(){
       d.weapons=d.weapons.slice(0,6).map(x=>({n:weaponByName(x.n).n,e:clamp(parseInt(x.e,10)||0,0,12)}));
       if(!PRESETS[d.preset])d.preset="dk";
       if(!DOLLS.some(x=>x.id===d.doll))d.doll="none";
-      if(d.size!=="large")d.size="small";
+      d.beta=!!d.beta;
+      if(!["pvp","small","large"].includes(d.size))d.size="small";
+      if(!d.beta&&d.size==="pvp")d.size="small";  // 打人 exists only with the Beta switch on
       if(!CLS[d.cls])d.cls="knight";
       d.undead=!!d.undead;
+      d.tac=clamp(Math.round(+d.tac)||0,-120,10);d.tdr=clamp(Math.round(+d.tdr)||0,0,30);d.hadj=clamp(Math.round(+d.hadj)||0,-30,30);
       delete d.rkStr;
       delete d.buffs.pride;  // 傲慢的遺產 switch, removed in v40
       const seen={};
@@ -370,8 +424,9 @@ function cardHTML(x,i){
     (canUse(w,state.cls)?"":`<span class="chip chip-warn">${CLS[state.cls]}不能用</span>`)+
     `<span class="chip">${w.t}</span><span class="chip">${dice}</span>`+
     info.map(s=>`<span class="chip">${esc(s)}</span>`).join("")+
-    (w.u?`<span class="chip${state.undead?" chip-on":""}">對不死 +1～20</span>`:"")+
-    `<span class="chip" id="w${i}-hit" hidden></span>`;
+    (w.u?`<span class="chip${state.undead&&state.size!=="pvp"?" chip-on":""}">對不死 +1～20</span>`:"")+
+    `<span class="chip" id="w${i}-hit" hidden></span>`+
+    `<span class="chip chip-on" id="w${i}-hr"></span>`;
   return `<article class="wcard" id="card-${i}">
     <div class="wtop">
       <div class="selwrap"><select id="w${i}-n" data-w="${i}" aria-label="第 ${i+1} 把武器">${optionsHTML(w.n)}</select></div>
@@ -408,9 +463,16 @@ function update(){
   document.querySelectorAll("#size-seg [data-size]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.size===state.size)));
   document.querySelectorAll("#cls-seg [data-cls]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.cls===state.cls)));
   $("t-undead").checked=state.undead;
+  $("t-beta").checked=!!state.beta;
+  document.querySelector('#size-seg [data-size="pvp"]').hidden=!state.beta;
+  $("size-seg").classList.toggle("has-pvp",!!state.beta);
+  document.querySelector('#size-seg [data-size="small"]').textContent=state.beta?"小怪":"小怪・打人";
+  const pvp=state.size==="pvp";
+  $("pvp-panel").hidden=!pvp;$("undead-wrap").hidden=pvp;
+  $("hit-note").textContent=pvp?"Beta：命中率為推測":"DPS 和每分鐘傷害以命中率上限 95% 計算";
   $("preset-hint").innerHTML=`${p.desc}：單手劍每分鐘&nbsp;<b>${p.sword}</b>&nbsp;刀、匕首&nbsp;<b>${p.dagger}</b>&nbsp;刀`+
     (p.est?"":`、雙手劍&nbsp;<b>${p.twohand}</b>&nbsp;刀`)+` <span class="tag ${p.est?"guess":"meas"}">${p.est?"推算":"實測"}</span>`;
-  ["level","str","other"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
+  ["level","str","other","tac","tdr","hadj"].forEach(k=>{const el=$("f-"+k);if(document.activeElement!==el)el.value=state[k];});
   const sb=strBonus(state.str),lv=levelBonus(state.level,state.cls==="knight");
   const dollV=(DOLLS.find(d=>d.id===state.doll)||DOLLS[0]).v;
   const buffSum=BUFFS.reduce((s,b)=>s+(state.buffs[b.id]?b.v:0),0);
@@ -420,7 +482,8 @@ function update(){
     `<span class="chip">${state.cls==="knight"?`等級加成 <b>+${lv}</b> <span class="tag">騎士每 10 級 +1</span>`:`等級加成 <b>+0</b> <span class="tag">只有騎士有</span>`}</span>`+
     `<span class="chip">魔法娃娃 <b>+${dollV}</b></span>`+
     `<span class="chip">其他加成 <b>${state.other<0?"":"+"}${state.other}</b></span>`+
-    `<span class="chip">狀態 <b>+${buffSum}</b></span>`;
+    `<span class="chip">狀態 <b>+${buffSum}</b></span>`+
+    (pvp?`<span class="chip">命中（不含武器）<b>${Math.round(baseHitOf(state,p))}</b></span>`:"");
   BUFFS.forEach(b=>{if(!b.group)$("b-"+b.id).checked=!!state.buffs[b.id];});
   GROUPS.forEach(g=>{const on=BUFFS.find(b=>b.group===g.id&&state.buffs[b.id]);$(g.sel).value=on?on.id:"none";$(g.val).innerHTML=on?buffLine(on):g.none;});
   const rows=calc(state);
@@ -436,6 +499,8 @@ function update(){
     const base=r.w.hit||0,hc=$(`w${i}-hit`);
     hc.hidden=!r.hit;
     hc.innerHTML=r.hit?`命中 <b>+${r.hit}</b>`+(r.e?`（${base?`武器 +${base}、`:""}強化 +${r.e}）`:""):"";
+    $(`w${i}-hr`).hidden=!pvp;
+    $(`w${i}-hr`).innerHTML=`預估命中率 <b>${Math.round(r.hitRate*100)}%</b>`;
     const isBest=rows.length>1&&i===best;
     $(`r${i}-best`).hidden=!isBest;
     $(`card-${i}`).classList.toggle("best",isBest);
@@ -470,7 +535,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("input",e=>{
   const t=e.target,v=parseInt(t.value,10);
   if(Number.isNaN(v))return;
-  if(["f-level","f-str","f-other"].includes(t.id)){state[t.id.slice(2)]=clamp(v,Number(t.min),Number(t.max));update();}
+  if(["f-level","f-str","f-other","f-tac","f-tdr","f-hadj"].includes(t.id)){state[t.id.slice(2)]=clamp(v,Number(t.min),Number(t.max));update();}
   else if(t.classList.contains("enc")){state.weapons[+t.dataset.w].e=clamp(v,0,12);update();}
 });
 document.addEventListener("change",e=>{
@@ -482,9 +547,10 @@ document.addEventListener("change",e=>{
     renderWeapons();
   }else if(t.id==="f-doll"){state.doll=t.value;update();}
   else if(t.id==="t-undead"){state.undead=t.checked;renderWeapons();}
+  else if(t.id==="t-beta"){state.beta=t.checked;if(state.beta)state.size="pvp";else if(state.size==="pvp")state.size="small";renderWeapons();}
   else if(t.matches("select[data-group]")){BUFFS.forEach(b=>{if(b.group===t.dataset.group)state.buffs[b.id]=b.id===t.value;});update();}
   else if(t.matches("input[data-buff]")){state.buffs[t.dataset.buff]=t.checked;update();}
-  else if(["f-level","f-str","f-other"].includes(t.id)){t.value=state[t.id.slice(2)];}
+  else if(["f-level","f-str","f-other","f-tac","f-tdr","f-hadj"].includes(t.id)){t.value=state[t.id.slice(2)];}
   else if(t.classList.contains("enc")){t.value=state.weapons[+t.dataset.w].e;}
 });
 renderWeapons();
